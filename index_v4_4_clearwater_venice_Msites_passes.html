@@ -1,0 +1,1761 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>GulfFishing v4.4 (M-sites + Passes)</title>
+<style>
+  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; background:#0b1220; color:#e9eefc; }
+  header { position: sticky; top:0; background: rgba(11,18,32,0.92); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 14px 16px; z-index: 10; }
+  h1 { font-size: 18px; margin: 0 0 6px 0; }
+  .sub { font-size: 12px; opacity: 0.85; }
+  .controls { display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px; align-items:center; }
+  input[type="text"] { flex: 1 1 320px; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: #e9eefc; outline:none; }
+  select { padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: #e9eefc; outline:none; }
+  .chips { display:flex; gap:8px; flex-wrap:wrap; }
+  .chip { cursor:pointer; user-select:none; font-size: 12px; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06); }
+  .chip.active { background: rgba(99, 179, 237, 0.18); border-color: rgba(99, 179, 237, 0.45); }
+  main { padding: 14px 16px 40px 16px; }
+  .meta { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom: 10px; }
+  .count { font-size: 13px; opacity: 0.9; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+  .card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); border-radius: 14px; padding: 12px 12px 10px 12px; }
+  .title { font-weight: 700; font-size: 14px; margin: 0 0 6px 0; }
+  .row { font-size: 12px; opacity: 0.92; margin: 4px 0; }
+  .badges { display:flex; gap:6px; flex-wrap:wrap; margin-top: 8px; }
+  .badge { font-size: 11px; padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.10); }
+  .badge.z-inshore { background: rgba(72,187,120,0.16); border-color: rgba(72,187,120,0.35); }
+  .badge.z-nearshore { background: rgba(237,137,54,0.18); border-color: rgba(237,137,54,0.38); }
+  .badge.z-offshore { background: rgba(66,153,225,0.18); border-color: rgba(66,153,225,0.40); }
+  .badge.t-reef { background: rgba(237,137,54,0.18); border-color: rgba(237,137,54,0.38); }
+  .badge.t-wreck { background: rgba(245,101,101,0.18); border-color: rgba(245,101,101,0.40); }
+  .badge.t-inshore { background: rgba(72,187,120,0.16); border-color: rgba(72,187,120,0.35); }
+  .badge.t-bait { background: rgba(183,148,244,0.18); border-color: rgba(183,148,244,0.40); }
+  details { margin-top: 8px; }
+  summary { cursor:pointer; font-size: 12px; opacity: 0.95; }
+  pre { white-space: pre-wrap; word-break: break-word; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.10); padding: 10px; border-radius: 12px; overflow:auto; }
+  a { color: #9ad7ff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  footer { opacity: 0.75; font-size: 12px; padding: 16px; border-top: 1px solid rgba(255,255,255,0.08); }
+  .legend { font-size:12px; opacity:0.9; display:flex; align-items:center; gap:6px; }
+  .dot { width:10px; height:10px; border-radius:999px; display:inline-block; }
+  .dot-inshore { background: rgba(72,187,120,0.95); }
+  .dot-reef { background: rgba(237,137,54,0.95); }
+  .dot-wreck { background: rgba(245,101,101,0.95); }
+  .dot-bait { background: rgba(183,148,244,0.95); }
+</style>
+</head>
+<body>
+<header>
+  <h1>GulfFishing v4.4 – Clearwater → Venice (M-sites + Passes + Topplistor)</h1>
+  <div class="sub">
+    Hemmahamn: 27°31'35.4"N 82°43'07.0"W (≈ 27.526500, -82.718611) • 18 kn • Uppdaterad: 2025-12-28 19:11
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+    <span class="legend"><span class="dot dot-inshore"></span>Inshore</span>
+    <span class="legend"><span class="dot dot-reef"></span>Reef</span>
+    <span class="legend"><span class="dot dot-wreck"></span>Wreck</span>
+    <span class="legend"><span class="dot dot-bait"></span>Bait</span>
+  </div>
+  <div class="controls">
+    <input id="q" type="text" placeholder="Sök: snook, bait, greenbacks, wreck, reef, 30 nm, trolling…"/>
+    <select id="folder"><option value="__all__">Alla typer</option></select>
+    <select id="species"><option value="__all__">Alla arter</option></select>
+    <select id="sort">
+      <option value="dist">Sortera: närmast först</option>
+      <option value="name">Sortera: namn A→Ö</option>
+      <option value="folder">Sortera: typ</option>
+    </select>
+  </div>
+  <div class="controls">
+    <div class="chips" id="zones">
+      <div class="chip active" data-zone="__all__">Alla zoner</div>
+      <div class="chip" data-zone="Inshore">Inshore (≤10 NM)</div>
+      <div class="chip" data-zone="Nearshore">Nearshore (10–25 NM)</div>
+      <div class="chip" data-zone="Offshore">Offshore (≥25 NM)</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="toplists" class="card" style="margin-bottom:12px"></div>
+  <div class="meta">
+    <div class="count" id="count"></div>
+    <div class="count">Windows: <b>CTRL+F</b> funkar alltid som extra sök.</div>
+  </div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer>
+  <div><b>Obs:</b> Avstånd är fågelvägen. Tid = distans/18 kn. “Bait”-spots är generella pass/strömlinjer – flytta dig efter stim, vind och tidvatten.</div>
+</footer>
+
+<script>
+const DATA = {"home": {"lat": 27.5265, "lon": -82.71861111111112}, "speed_kn": 18.0, "generated": "2025-12-28 21:55", "species": ["Snook", "Redfish", "Ladyfish", "Tarpon", "Cobia", "Kingfish", "Permit", "Greater Amberjack", "Bluefish", "Spanish Mackerel", "Drumfish", "Jack Crevalle", "Barracuda", "Hogfish", "Mahi Mahi", "Tuna", "Goliath Grouper", "Gag Grouper", "Red Grouper", "Black Grouper", "Mangrove Snapper", "Red Snapper", "Lane Snapper", "Pinfish", "Threadfin Herring", "Pilchard/Greenbacks", "Blue Runners"], "folders": ["Bait", "Barges / Pråmar", "Craft", "Hemmahamn", "Inshore Edge", "Inshore Flats", "M-sites (Manatee)", "Military", "Offshore Reef", "Offshore Wreck", "Passes", "Reefs / Rev", "Shipwrecks", "Tugs / Cutters"], "items": [{"folder": "Reefs / Rev", "name": "R Bulkhead Reef", "lat": 27.5533333333, "lon": -82.7066666667, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Reef/hård botten
+⚠️ Noteringar:
+- Generella tips – kontrollera aktuella FWC-regler (säsong/mått/kvot).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 1.7, "time_18kn": "6 min", "gmaps": "https://maps.google.com/?q=27.553333,-82.706667", "zone": "Inshore", "type_bucket": "Reef", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Bait", "name": "Bait – Passage Key (flats/kanter)", "lat": 27.5567019, "lon": -82.7431559, "desc": "Inshore bait på flats-kanter.
+Vanligt: Pinfish och små baitfish.
+
+Source: TopoZone Passage Key", "source": "TopoZone Passage Key", "dist_nm": 2.2, "time_18kn": "7 min", "gmaps": "https://maps.google.com/?q=27.556702,-82.743156", "zone": "Inshore", "type_bucket": "Bait", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Reefs / Rev", "name": "R 1-mile Reef North", "lat": 27.49, "lon": -82.735, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Reef/hård botten
+⚠️ Noteringar:
+- Generella tips – kontrollera aktuella FWC-regler (säsong/mått/kvot).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 2.4, "time_18kn": "8 min", "gmaps": "https://maps.google.com/?q=27.490000,-82.735000", "zone": "Inshore", "type_bucket": "Reef", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Reefs / Rev", "name": "R Southeast Tampa Reef", "lat": 27.5483333333, "lon": -82.6716666667, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Reef/hård botten
+⚠️ Noteringar:
+- Generella tips – kontrollera aktuella FWC-regler (säsong/mått/kvot).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 2.8, "time_18kn": "9 min", "gmaps": "https://maps.google.com/?q=27.548333,-82.671667", "zone": "Inshore", "type_bucket": "Reef", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Reefs / Rev", "name": "R Manatee River – Emerson Point", "lat": 27.53, "lon": -82.6466666667, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Reef/hård botten
+⚠️ Noteringar:
+- Generella tips – kontrollera aktuella FWC-regler (säsong/mått/kvot).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 3.8, "time_18kn": "13 min", "gmaps": "https://maps.google.com/?q=27.530000,-82.646667", "zone": "Inshore", "type_bucket": "Reef", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Reefs / Rev", "name": "R 3-mile Reef North", "lat": 27.5, "lon": -82.7833333333, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Reef/hård botten
+⚠️ Noteringar:
+- Generella tips – kontrollera aktuella FWC-regler (säsong/mått/kvot).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 3.8, "time_18kn": "13 min", "gmaps": "https://maps.google.com/?q=27.500000,-82.783333", "zone": "Inshore", "type_bucket": "Reef", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Bait", "name": "Bait – Longboat Pass (ström & bait)", "lat": 27.4439291, "lon": -82.6875996, "desc": "Cast-net bait runt pass/kanter.
+Vanligt: Pilchards/Greenbacks, Threadfin.
+
+Source: TopoZone Longboat Pass", "source": "TopoZone Longboat Pass", "dist_nm": 5.2, "time_18kn": "17 min", "gmaps": "https://maps.google.com/?q=27.443929,-82.687600", "zone": "Inshore", "type_bucket": "Bait", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Passes", "name": "Longboat Pass (Inshore Edge)", "lat": 27.4439291, "lon": -82.6875996, "desc": "Pass/current seams.
+Targets: Snook, Tarpon (seasonal), Spanish Mackerel, Ladyfish, Jack Crevalle.
+Methods: freelining, jigging along edges; fish moving tide.
+
+Source: TopoZone", "source": "TopoZone", "dist_nm": 5.2, "time_18kn": "17 min", "gmaps": "https://maps.google.com/?q=27.443929,-82.687600", "zone": "Inshore", "type_bucket": "Inshore Edge", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Inshore Flats", "name": "Fort De Soto – grass flats/edges", "lat": 27.6197551, "lon": -82.7276002, "desc": "Grass flats/edges near passes.
+Targets: Snook, Redfish, Spanish Mackerel, Bluefish.
+Depth: varies.
+
+Source: TopoZone", "source": "TopoZone", "dist_nm": 5.6, "time_18kn": "19 min", "gmaps": "https://maps.google.com/?q=27.619755,-82.727600", "zone": "Inshore", "type_bucket": "Inshore Flats", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Bait", "name": "Bait – Sunshine Skyway (pylons/ström)", "lat": 27.62025, "lon": -82.65548, "desc": "Sabiki runt struktur/ström.
+Vanligt: Blue Runners.
+Obs: stark ström & trafik – håll koll.
+
+Source: WaterwayGuide Skyway coords", "source": "WaterwayGuide Skyway coords", "dist_nm": 6.6, "time_18kn": "22 min", "gmaps": "https://maps.google.com/?q=27.620250,-82.655480", "zone": "Inshore", "type_bucket": "Bait", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Barges / Pråmar", "name": "B Meisner Barge (100' barge)", "lat": 27.545, "lon": -82.845, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Pråm/konstgjort rev – tydlig struktur
+⚠️ Noteringar:
+- Barges kan ge både bottenfisk och pelagiskt beroende på ström.
+- Kör gärna ett varv med ekolod runt innan första drift.
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Goliath Grouper (ofta C&R / regler kan gälla)
+  • Säsong: året runt (topp ofta vår–höst)
+  • Metod: tungt bottenmete nära struktur/vrak, korta drifter
+  • Bete: live jack/pinfish/grunt, stora chunk baits
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+King Mackerel (Kingfish)
+  • Säsong: vår–höst
+  • Metod: trolling (planer/skim), drift med livebait
+  • Bete: live blue runner, threadfin herring, stora skedar
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 6.8, "time_18kn": "23 min", "gmaps": "https://maps.google.com/?q=27.545000,-82.845000", "zone": "Inshore", "type_bucket": "Wreck", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Bait", "name": "Bait – Bunces Pass (tid/strömkant)", "lat": 27.6458653, "lon": -82.7284336, "desc": "Cast-net / Sabiki.
+Vanligt: Pilchards/Greenbacks, Threadfin Herring, ibland Blue Runners.
+Tips: strömkant + bait shower + fåglar.
+
+Source: TopoZone Bunces Pass", "source": "TopoZone Bunces Pass", "dist_nm": 7.2, "time_18kn": "24 min", "gmaps": "https://maps.google.com/?q=27.645865,-82.728434", "zone": "Inshore", "type_bucket": "Bait", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Reefs / Rev", "name": "R 7-mile Reef North", "lat": 27.445, "lon": -82.82, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Reef/hård botten
+⚠️ Noteringar:
+- Generella tips – kontrollera aktuella FWC-regler (säsong/mått/kvot).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 7.3, "time_18kn": "24 min", "gmaps": "https://maps.google.com/?q=27.445000,-82.820000", "zone": "Inshore", "type_bucket": "Reef", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Shipwrecks", "name": "S USS Narcissus (Egmont Key – approx)", "lat": 27.6258, "lon": -82.7997, "desc": "📏 Djup: grunt (varierar) (~grunt (varierar))
+🪸 Miljö: Historiskt vrak (grund struktur)
+⚠️ Noteringar:
+- Skyddad historisk plats – undvik ankare, använd boj om finns.
+- Respektera lokala regler.
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Goliath Grouper (ofta C&R / regler kan gälla)
+  • Säsong: året runt (topp ofta vår–höst)
+  • Metod: tungt bottenmete nära struktur/vrak, korta drifter
+  • Bete: live jack/pinfish/grunt, stora chunk baits
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 7.4, "time_18kn": "25 min", "gmaps": "https://maps.google.com/?q=27.625800,-82.799700", "zone": "Inshore", "type_bucket": "Wreck", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Bait", "name": "Bait – Pass-a-Grille Channel (strömkant)", "lat": 27.6905857, "lon": -82.7314894, "desc": "Cast-net nära strömkant.
+Vanligt: Pilchards/Greenbacks, Threadfin Herring.
+Tips: bäst när tidvattnet rör sig.
+
+Source: TopoZone Pass-a-Grille Channel", "source": "TopoZone Pass-a-Grille Channel", "dist_nm": 9.9, "time_18kn": "33 min", "gmaps": "https://maps.google.com/?q=27.690586,-82.731489", "zone": "Inshore", "type_bucket": "Bait", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Barges / Pråmar", "name": "B 200' Steel Deck Barge – St. Pete Beach", "lat": 27.6766666667, "lon": -82.86235, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Pråm/konstgjort rev – tydlig struktur
+⚠️ Noteringar:
+- Barges kan ge både bottenfisk och pelagiskt beroende på ström.
+- Kör gärna ett varv med ekolod runt innan första drift.
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Goliath Grouper (ofta C&R / regler kan gälla)
+  • Säsong: året runt (topp ofta vår–höst)
+  • Metod: tungt bottenmete nära struktur/vrak, korta drifter
+  • Bete: live jack/pinfish/grunt, stora chunk baits
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+King Mackerel (Kingfish)
+  • Säsong: vår–höst
+  • Metod: trolling (planer/skim), drift med livebait
+  • Bete: live blue runner, threadfin herring, stora skedar
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 11.8, "time_18kn": "39 min", "gmaps": "https://maps.google.com/?q=27.676667,-82.862350", "zone": "Nearshore", "type_bucket": "Wreck", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Reefs / Rev", "name": "R St. Pete Beach Reef", "lat": 27.6766666667, "lon": -82.8633333333, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Reef/hård botten
+⚠️ Noteringar:
+- Generella tips – kontrollera aktuella FWC-regler (säsong/mått/kvot).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 11.9, "time_18kn": "40 min", "gmaps": "https://maps.google.com/?q=27.676667,-82.863333", "zone": "Nearshore", "type_bucket": "Reef", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Bait", "name": "Bait – Egmont Channel Entrance (marker/ström)", "lat": 27.59, "lon": -82.931, "desc": "Sabiki/vertical.
+Vanligt: Blue Runners.
+Arter nära bait: Spanish Mackerel, Kingfish, Cobia.
+Obs: undvik farled.
+
+Source: NOAA NDBC Station 42098", "source": "NOAA NDBC Station 42098", "dist_nm": 11.9, "time_18kn": "40 min", "gmaps": "https://maps.google.com/?q=27.590000,-82.931000", "zone": "Nearshore", "type_bucket": "Bait", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Military", "name": "M U.S. Army Tanks (cluster) – St. Pete Beach", "lat": 27.6785, "lon": -82.8636666667, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Militär struktur-kluster
+⚠️ Noteringar:
+- Fiska kanterna; tanks kan vara spridda på botten.
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Sheepshead
+  • Säsong: vinter–vår
+  • Metod: tight bottenmete vid bryggor/sten/reef, små krokar
+  • Bete: fiddler crab, shrimp, barnacle
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 12.0, "time_18kn": "40 min", "gmaps": "https://maps.google.com/?q=27.678500,-82.863667", "zone": "Nearshore", "type_bucket": "Other", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Offshore Reef", "name": "Gary Serviss Reef", "lat": 27.319533333333332, "lon": -82.7194, "desc": "Official Sarasota County artificial reef / wreck site.
+Targets: Grouper/Snapper, Hogfish; deeper sites add Amberjack.
+Methods: bottom fishing, vertical jig, live bait.
+
+Source: Sarasota County Artificial Reefs PDF", "source": "Sarasota County Artificial Reefs PDF", "dist_nm": 12.4, "time_18kn": "41 min", "gmaps": "https://maps.google.com/?q=27.319533,-82.719400", "zone": "Nearshore", "type_bucket": "Offshore Reef", "depth_ft_lo": 42, "depth_ft_hi": 42, "depth_str": "42 ft / 13 m"}, {"folder": "M-sites (Manatee)", "name": "M-1 Artificial Reef", "lat": 27.31931666666667, "lon": -82.72013333333334, "desc": "Manatee County 'M-site' artificial reef.
+Targets: Grouper (incl. Goliath), Snapper, Hogfish, Cobia, Kingfish, Amberjack.
+Methods: bottom fishing, live bait, vertical jig.
+
+Source: Local GPS Locations (Sarasota Bay Fishing Charters)", "source": "Local GPS Locations (Sarasota Bay Fishing Charters)", "dist_nm": 12.4, "time_18kn": "41 min", "gmaps": "https://maps.google.com/?q=27.319317,-82.720133", "zone": "Nearshore", "type_bucket": "Offshore Reef", "depth_ft_lo": 40, "depth_ft_hi": 40, "depth_str": "40 ft / 12 m"}, {"folder": "Offshore Reef", "name": "Tom Wallin Reef", "lat": 27.312416666666667, "lon": -82.71668333333334, "desc": "Official Sarasota County artificial reef / wreck site.
+Targets: Grouper/Snapper, Hogfish; deeper sites add Amberjack.
+Methods: bottom fishing, vertical jig, live bait.
+
+Source: Sarasota County Artificial Reefs PDF", "source": "Sarasota County Artificial Reefs PDF", "dist_nm": 12.9, "time_18kn": "43 min", "gmaps": "https://maps.google.com/?q=27.312417,-82.716683", "zone": "Nearshore", "type_bucket": "Offshore Reef", "depth_ft_lo": 42, "depth_ft_hi": 42, "depth_str": "42 ft / 13 m"}, {"folder": "M-sites (Manatee)", "name": "M-2 Artificial Reef", "lat": 27.31223333333333, "lon": -82.71626666666667, "desc": "Manatee County 'M-site' artificial reef.
+Targets: Grouper (incl. Goliath), Snapper, Hogfish, Cobia, Kingfish, Amberjack.
+Methods: bottom fishing, live bait, vertical jig.
+
+Source: Local GPS Locations (Sarasota Bay Fishing Charters)", "source": "Local GPS Locations (Sarasota Bay Fishing Charters)", "dist_nm": 12.9, "time_18kn": "43 min", "gmaps": "https://maps.google.com/?q=27.312233,-82.716267", "zone": "Nearshore", "type_bucket": "Offshore Reef", "depth_ft_lo": 40, "depth_ft_hi": 40, "depth_str": "40 ft / 12 m"}, {"folder": "Bait", "name": "Bait – New Pass (Sarasota) (ström & bait)", "lat": 27.3333172, "lon": -82.5830544, "desc": "Cast-net bait vid strömvändningar.
+Vanligt: Pilchards, Threadfin, pinfish på kanter.
+
+Source: TopoZone New Pass", "source": "TopoZone New Pass", "dist_nm": 13.7, "time_18kn": "46 min", "gmaps": "https://maps.google.com/?q=27.333317,-82.583054", "zone": "Nearshore", "type_bucket": "Bait", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Inshore Flats", "name": "Cockroach Bay Aquatic Preserve – seagrass flats", "lat": 27.6861422, "lon": -82.5342628, "desc": "Seagrass flats & edges.
+Targets: Snook, Redfish, Ladyfish, Tarpon (seasonal), Drumfish.
+Methods: edges on moving tide.
+Depth: varies (shallow).
+
+Source: TopoZone", "source": "TopoZone", "dist_nm": 13.7, "time_18kn": "46 min", "gmaps": "https://maps.google.com/?q=27.686142,-82.534263", "zone": "Nearshore", "type_bucket": "Inshore Flats", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Passes", "name": "New Pass (Sarasota) (Inshore Edge)", "lat": 27.3333172, "lon": -82.5830544, "desc": "Pass/current seams.
+Targets: Snook, Tarpon (seasonal), Spanish Mackerel, Ladyfish, Jack Crevalle.
+Methods: freelining, jigging along edges; fish moving tide.
+
+Source: TopoZone", "source": "TopoZone", "dist_nm": 13.7, "time_18kn": "46 min", "gmaps": "https://maps.google.com/?q=27.333317,-82.583054", "zone": "Nearshore", "type_bucket": "Inshore Edge", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "M-sites (Manatee)", "name": "M-3 Artificial Reef", "lat": 27.279033333333338, "lon": -82.72018333333332, "desc": "Manatee County 'M-site' artificial reef.
+Targets: Grouper (incl. Goliath), Snapper, Hogfish, Cobia, Kingfish, Amberjack.
+Methods: bottom fishing, live bait, vertical jig.
+
+Source: Local GPS Locations (Sarasota Bay Fishing Charters)", "source": "Local GPS Locations (Sarasota Bay Fishing Charters)", "dist_nm": 14.9, "time_18kn": "50 min", "gmaps": "https://maps.google.com/?q=27.279033,-82.720183", "zone": "Nearshore", "type_bucket": "Offshore Reef", "depth_ft_lo": 40, "depth_ft_hi": 40, "depth_str": "40 ft / 12 m"}, {"folder": "Reefs / Rev", "name": "R Treasure Island Reef", "lat": 27.7416666667, "lon": -82.8816666667, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Reef/hård botten
+⚠️ Noteringar:
+- Generella tips – kontrollera aktuella FWC-regler (säsong/mått/kvot).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 15.6, "time_18kn": "52 min", "gmaps": "https://maps.google.com/?q=27.741667,-82.881667", "zone": "Nearshore", "type_bucket": "Reef", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Passes", "name": "Johns Pass (Inshore Edge)", "lat": 27.7836375, "lon": -82.7817686, "desc": "Pass/current seams.
+Targets: Snook, Tarpon (seasonal), Spanish Mackerel, Ladyfish, Jack Crevalle.
+Methods: freelining, jigging along edges; fish moving tide.
+
+Source: TopoZone", "source": "TopoZone", "dist_nm": 15.8, "time_18kn": "53 min", "gmaps": "https://maps.google.com/?q=27.783638,-82.781769", "zone": "Nearshore", "type_bucket": "Inshore Edge", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "M-sites (Manatee)", "name": "M-7 Artificial Reef", "lat": 27.270933333333332, "lon": -82.79991666666668, "desc": "Manatee County 'M-site' artificial reef.
+Targets: Grouper (incl. Goliath), Snapper, Hogfish, Cobia, Kingfish, Amberjack.
+Methods: bottom fishing, live bait, vertical jig.
+
+Source: Local GPS Locations (Sarasota Bay Fishing Charters)", "source": "Local GPS Locations (Sarasota Bay Fishing Charters)", "dist_nm": 15.9, "time_18kn": "53 min", "gmaps": "https://maps.google.com/?q=27.270933,-82.799917", "zone": "Nearshore", "type_bucket": "Offshore Reef", "depth_ft_lo": 52, "depth_ft_hi": 52, "depth_str": "52 ft / 16 m"}, {"folder": "Bait", "name": "Bait – Big Sarasota Pass (ström & bait)", "lat": 27.2941781, "lon": -82.5660784, "desc": "Cast-net + flats-kanter.
+Vanligt: Pinfish och små baitfish, ibland pilchards.
+
+Source: TopoZone Big Sarasota Pass", "source": "TopoZone Big Sarasota Pass", "dist_nm": 16.1, "time_18kn": "54 min", "gmaps": "https://maps.google.com/?q=27.294178,-82.566078", "zone": "Nearshore", "type_bucket": "Bait", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Passes", "name": "Big Sarasota Pass (Inshore Edge)", "lat": 27.2941781, "lon": -82.5660784, "desc": "Pass/current seams.
+Targets: Snook, Tarpon (seasonal), Spanish Mackerel, Ladyfish, Jack Crevalle.
+Methods: freelining, jigging along edges; fish moving tide.
+
+Source: TopoZone", "source": "TopoZone", "dist_nm": 16.1, "time_18kn": "54 min", "gmaps": "https://maps.google.com/?q=27.294178,-82.566078", "zone": "Nearshore", "type_bucket": "Inshore Edge", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Passes", "name": "Big Pass (Siesta Key) (Inshore Edge)", "lat": 27.29094176, "lon": -82.56525892, "desc": "Pass/current seams.
+Targets: Snook, Tarpon (seasonal), Spanish Mackerel, Ladyfish, Jack Crevalle.
+Methods: freelining, jigging along edges; fish moving tide.
+
+Source: Sarasota WaterAtlas", "source": "Sarasota WaterAtlas", "dist_nm": 16.3, "time_18kn": "54 min", "gmaps": "https://maps.google.com/?q=27.290942,-82.565259", "zone": "Nearshore", "type_bucket": "Inshore Edge", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "M-sites (Manatee)", "name": "M-4 Artificial Reef", "lat": 27.252733333333335, "lon": -82.71940000000001, "desc": "Manatee County 'M-site' artificial reef.
+Targets: Grouper (incl. Goliath), Snapper, Hogfish, Cobia, Kingfish, Amberjack.
+Methods: bottom fishing, live bait, vertical jig.
+
+Source: Local GPS Locations (Sarasota Bay Fishing Charters)", "source": "Local GPS Locations (Sarasota Bay Fishing Charters)", "dist_nm": 16.4, "time_18kn": "55 min", "gmaps": "https://maps.google.com/?q=27.252733,-82.719400", "zone": "Nearshore", "type_bucket": "Offshore Reef", "depth_ft_lo": 40, "depth_ft_hi": 40, "depth_str": "40 ft / 12 m"}, {"folder": "Reefs / Rev", "name": "R St. Petersburg Bay Reef", "lat": 27.785, "lon": -82.5983333333, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Reef/hård botten
+⚠️ Noteringar:
+- Generella tips – kontrollera aktuella FWC-regler (säsong/mått/kvot).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 16.8, "time_18kn": "56 min", "gmaps": "https://maps.google.com/?q=27.785000,-82.598333", "zone": "Nearshore", "type_bucket": "Reef", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Barges / Pråmar", "name": "B Barge – St. Pete Bay Reef", "lat": 27.7887333333, "lon": -82.5914166667, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Pråm/konstgjort rev – tydlig struktur
+⚠️ Noteringar:
+- Barges kan ge både bottenfisk och pelagiskt beroende på ström.
+- Kör gärna ett varv med ekolod runt innan första drift.
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Goliath Grouper (ofta C&R / regler kan gälla)
+  • Säsong: året runt (topp ofta vår–höst)
+  • Metod: tungt bottenmete nära struktur/vrak, korta drifter
+  • Bete: live jack/pinfish/grunt, stora chunk baits
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+King Mackerel (Kingfish)
+  • Säsong: vår–höst
+  • Metod: trolling (planer/skim), drift med livebait
+  • Bete: live blue runner, threadfin herring, stora skedar
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 17.1, "time_18kn": "57 min", "gmaps": "https://maps.google.com/?q=27.788733,-82.591417", "zone": "Nearshore", "type_bucket": "Wreck", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Reefs / Rev", "name": "R Madeira Reef", "lat": 27.7716666667, "lon": -82.915, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Reef/hård botten
+⚠️ Noteringar:
+- Generella tips – kontrollera aktuella FWC-regler (säsong/mått/kvot).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 18.0, "time_18kn": "1 h 0 min", "gmaps": "https://maps.google.com/?q=27.771667,-82.915000", "zone": "Nearshore", "type_bucket": "Reef", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Tugs / Cutters", "name": "T Steel-hulled Tug – Pinellas South", "lat": 27.7229166667, "lon": -82.9741666667, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Tug/struktur
+⚠️ Noteringar:
+- Anpassa tackel efter ström (tyngre bly vid behov).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Goliath Grouper (ofta C&R / regler kan gälla)
+  • Säsong: året runt (topp ofta vår–höst)
+  • Metod: tungt bottenmete nära struktur/vrak, korta drifter
+  • Bete: live jack/pinfish/grunt, stora chunk baits
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+King Mackerel (Kingfish)
+  • Säsong: vår–höst
+  • Metod: trolling (planer/skim), drift med livebait
+  • Bete: live blue runner, threadfin herring, stora skedar
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 18.0, "time_18kn": "1 h 0 min", "gmaps": "https://maps.google.com/?q=27.722917,-82.974167", "zone": "Nearshore", "type_bucket": "Wreck", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Barges / Pråmar", "name": "B 75' Steel Deck Barge – Pinellas South", "lat": 27.72225, "lon": -82.97475, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Pråm/konstgjort rev – tydlig struktur
+⚠️ Noteringar:
+- Barges kan ge både bottenfisk och pelagiskt beroende på ström.
+- Kör gärna ett varv med ekolod runt innan första drift.
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Goliath Grouper (ofta C&R / regler kan gälla)
+  • Säsong: året runt (topp ofta vår–höst)
+  • Metod: tungt bottenmete nära struktur/vrak, korta drifter
+  • Bete: live jack/pinfish/grunt, stora chunk baits
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+King Mackerel (Kingfish)
+  • Säsong: vår–höst
+  • Metod: trolling (planer/skim), drift med livebait
+  • Bete: live blue runner, threadfin herring, stora skedar
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 18.0, "time_18kn": "1 h 0 min", "gmaps": "https://maps.google.com/?q=27.722250,-82.974750", "zone": "Nearshore", "type_bucket": "Wreck", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Offshore Wreck", "name": "South County Reef – 80' Tug 'Orange'", "lat": 27.722916666666666, "lon": -82.97416666666666, "desc": "Pinellas County wreck/structure site.
+Targets: Grouper/Snapper, Amberjack, Cobia, Kingfish.
+Methods: bottom fishing, vertical jig, live bait.
+
+Source: Pinellas County Reef Summary PDF", "source": "Pinellas County Reef Summary PDF", "dist_nm": 18.0, "time_18kn": "1 h 0 min", "gmaps": "https://maps.google.com/?q=27.722917,-82.974167", "zone": "Nearshore", "type_bucket": "Wreck", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Barges / Pråmar", "name": "B 116' Steel Deck Barge – Pinellas South", "lat": 27.7231333333, "lon": -82.9770333333, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Pråm/konstgjort rev – tydlig struktur
+⚠️ Noteringar:
+- Barges kan ge både bottenfisk och pelagiskt beroende på ström.
+- Kör gärna ett varv med ekolod runt innan första drift.
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Goliath Grouper (ofta C&R / regler kan gälla)
+  • Säsong: året runt (topp ofta vår–höst)
+  • Metod: tungt bottenmete nära struktur/vrak, korta drifter
+  • Bete: live jack/pinfish/grunt, stora chunk baits
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+King Mackerel (Kingfish)
+  • Säsong: vår–höst
+  • Metod: trolling (planer/skim), drift med livebait
+  • Bete: live blue runner, threadfin herring, stora skedar
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 18.1, "time_18kn": "1 h 0 min", "gmaps": "https://maps.google.com/?q=27.723133,-82.977033", "zone": "Nearshore", "type_bucket": "Wreck", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Barges / Pråmar", "name": "B 110' Steel Deck Barge – Pinellas South", "lat": 27.7227166667, "lon": -82.9764, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Pråm/konstgjort rev – tydlig struktur
+⚠️ Noteringar:
+- Barges kan ge både bottenfisk och pelagiskt beroende på ström.
+- Kör gärna ett varv med ekolod runt innan första drift.
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Goliath Grouper (ofta C&R / regler kan gälla)
+  • Säsong: året runt (topp ofta vår–höst)
+  • Metod: tungt bottenmete nära struktur/vrak, korta drifter
+  • Bete: live jack/pinfish/grunt, stora chunk baits
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+King Mackerel (Kingfish)
+  • Säsong: vår–höst
+  • Metod: trolling (planer/skim), drift med livebait
+  • Bete: live blue runner, threadfin herring, stora skedar
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 18.1, "time_18kn": "1 h 0 min", "gmaps": "https://maps.google.com/?q=27.722717,-82.976400", "zone": "Nearshore", "type_bucket": "Wreck", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "M-sites (Manatee)", "name": "M-5 Artificial Reef", "lat": 27.2236, "lon": -82.71906666666668, "desc": "Manatee County 'M-site' artificial reef.
+Targets: Grouper (incl. Goliath), Snapper, Hogfish, Cobia, Kingfish, Amberjack.
+Methods: bottom fishing, live bait, vertical jig.
+
+Source: Local GPS Locations (Sarasota Bay Fishing Charters)", "source": "Local GPS Locations (Sarasota Bay Fishing Charters)", "dist_nm": 18.2, "time_18kn": "1 h 1 min", "gmaps": "https://maps.google.com/?q=27.223600,-82.719067", "zone": "Nearshore", "type_bucket": "Offshore Reef", "depth_ft_lo": 40, "depth_ft_hi": 40, "depth_str": "40 ft / 12 m"}, {"folder": "M-sites (Manatee)", "name": "M-8 Artificial Reef", "lat": 27.211416666666665, "lon": -82.80334999999998, "desc": "Manatee County 'M-site' artificial reef.
+Targets: Grouper (incl. Goliath), Snapper, Hogfish, Cobia, Kingfish, Amberjack.
+Methods: bottom fishing, live bait, vertical jig.
+
+Source: Local GPS Locations (Sarasota Bay Fishing Charters)", "source": "Local GPS Locations (Sarasota Bay Fishing Charters)", "dist_nm": 19.4, "time_18kn": "1 h 5 min", "gmaps": "https://maps.google.com/?q=27.211417,-82.803350", "zone": "Nearshore", "type_bucket": "Offshore Reef", "depth_ft_lo": 60, "depth_ft_hi": 60, "depth_str": "60 ft / 18 m"}, {"folder": "Offshore Wreck", "name": "Fallen Heroes Reef (CWO Kyle Jackson Trail)", "lat": 27.2088, "lon": -82.80201666666666, "desc": "Official Sarasota County artificial reef / wreck site.
+Targets: Grouper/Snapper, Hogfish; deeper sites add Amberjack.
+Methods: bottom fishing, vertical jig, live bait.
+
+Source: Sarasota County Artificial Reefs PDF", "source": "Sarasota County Artificial Reefs PDF", "dist_nm": 19.6, "time_18kn": "1 h 5 min", "gmaps": "https://maps.google.com/?q=27.208800,-82.802017", "zone": "Nearshore", "type_bucket": "Wreck", "depth_ft_lo": 65, "depth_ft_hi": 65, "depth_str": "65 ft / 20 m"}, {"folder": "Inshore Flats", "name": "Weedon Island Preserve – flats & mangroves", "lat": 27.845, "lon": -82.60194, "desc": "Inshore flats/mangroves.
+Targets: Snook, Redfish, Ladyfish, Tarpon (seasonal), Jack Crevalle.
+Methods: sight-fishing, soft plastics, live shrimp/pinfish.
+Depth: varies (tide).
+
+Source: Wikipedia", "source": "Wikipedia", "dist_nm": 20.1, "time_18kn": "1 h 7 min", "gmaps": "https://maps.google.com/?q=27.845000,-82.601940", "zone": "Nearshore", "type_bucket": "Inshore Flats", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Reefs / Rev", "name": "R Picnic Island Reef", "lat": 27.8333333333, "lon": -82.56, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Reef/hård botten
+⚠️ Noteringar:
+- Generella tips – kontrollera aktuella FWC-regler (säsong/mått/kvot).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 20.3, "time_18kn": "1 h 8 min", "gmaps": "https://maps.google.com/?q=27.833333,-82.560000", "zone": "Nearshore", "type_bucket": "Reef", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "M-sites (Manatee)", "name": "M-6 Artificial Reef", "lat": 27.1866, "lon": -82.72721666666666, "desc": "Manatee County 'M-site' artificial reef.
+Targets: Grouper (incl. Goliath), Snapper, Hogfish, Cobia, Kingfish, Amberjack.
+Methods: bottom fishing, live bait, vertical jig.
+
+Source: Local GPS Locations (Sarasota Bay Fishing Charters)", "source": "Local GPS Locations (Sarasota Bay Fishing Charters)", "dist_nm": 20.4, "time_18kn": "1 h 8 min", "gmaps": "https://maps.google.com/?q=27.186600,-82.727217", "zone": "Nearshore", "type_bucket": "Offshore Reef", "depth_ft_lo": 50, "depth_ft_hi": 50, "depth_str": "50 ft / 15 m"}, {"folder": "Reefs / Rev", "name": "R Picnic Island Pier Reef", "lat": 27.8566666667, "lon": -82.555, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Reef/hård botten
+⚠️ Noteringar:
+- Generella tips – kontrollera aktuella FWC-regler (säsong/mått/kvot).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 21.6, "time_18kn": "1 h 12 min", "gmaps": "https://maps.google.com/?q=27.856667,-82.555000", "zone": "Nearshore", "type_bucket": "Reef", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Reefs / Rev", "name": "R Port Tampa Reef", "lat": 27.8616666667, "lon": -82.5633333333, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Reef/hård botten
+⚠️ Noteringar:
+- Generella tips – kontrollera aktuella FWC-regler (säsong/mått/kvot).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 21.8, "time_18kn": "1 h 13 min", "gmaps": "https://maps.google.com/?q=27.861667,-82.563333", "zone": "Nearshore", "type_bucket": "Reef", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Reefs / Rev", "name": "R Howard Frankland Reef", "lat": 27.86, "lon": -82.555, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Reef/hård botten
+⚠️ Noteringar:
+- Generella tips – kontrollera aktuella FWC-regler (säsong/mått/kvot).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 21.8, "time_18kn": "1 h 13 min", "gmaps": "https://maps.google.com/?q=27.860000,-82.555000", "zone": "Nearshore", "type_bucket": "Reef", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Reefs / Rev", "name": "R Ballast Point Pier Reef", "lat": 27.8883333333, "lon": -82.4783333333, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Reef/hård botten
+⚠️ Noteringar:
+- Generella tips – kontrollera aktuella FWC-regler (säsong/mått/kvot).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 25.2, "time_18kn": "1 h 24 min", "gmaps": "https://maps.google.com/?q=27.888333,-82.478333", "zone": "Offshore", "type_bucket": "Reef", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Craft", "name": "C WWII Navy Landing Craft – Indian Shores", "lat": 27.85735, "lon": -83.03055, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Lägre profil-vrak/struktur
+⚠️ Noteringar:
+- Bra spot för driftande bottenmete, ofta fisk på kanterna.
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine", "source": "v4.1", "dist_nm": 25.9, "time_18kn": "1 h 26 min", "gmaps": "https://maps.google.com/?q=27.857350,-83.030550", "zone": "Offshore", "type_bucket": "Other", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Offshore Wreck", "name": "WWII Navy Landing Craft (Indian Shores)", "lat": 27.85735, "lon": -83.03055, "desc": "Pinellas County wreck/structure site.
+Targets: Grouper/Snapper, Amberjack, Cobia, Kingfish.
+Methods: bottom fishing, vertical jig, live bait.
+
+Source: Pinellas County Reef Summary PDF", "source": "Pinellas County Reef Summary PDF", "dist_nm": 25.9, "time_18kn": "1 h 26 min", "gmaps": "https://maps.google.com/?q=27.857350,-83.030550", "zone": "Offshore", "type_bucket": "Wreck", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Barges / Pråmar", "name": "B 240' Hopper Barge (Upside Down) – Indian Shores", "lat": 27.86325, "lon": -83.0336, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Pråm/konstgjort rev – tydlig struktur
+⚠️ Noteringar:
+- Barges kan ge både bottenfisk och pelagiskt beroende på ström.
+- Kör gärna ett varv med ekolod runt innan första drift.
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Goliath Grouper (ofta C&R / regler kan gälla)
+  • Säsong: året runt (topp ofta vår–höst)
+  • Metod: tungt bottenmete nära struktur/vrak, korta drifter
+  • Bete: live jack/pinfish/grunt, stora chunk baits
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+King Mackerel (Kingfish)
+  • Säsong: vår–höst
+  • Metod: trolling (planer/skim), drift med livebait
+  • Bete: live blue runner, threadfin herring, stora skedar
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 26.3, "time_18kn": "1 h 28 min", "gmaps": "https://maps.google.com/?q=27.863250,-83.033600", "zone": "Offshore", "type_bucket": "Wreck", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Offshore Wreck", "name": "240' Hopper Barge (Indian Shores)", "lat": 27.86325, "lon": -83.0336, "desc": "Pinellas County wreck/structure site.
+Targets: Grouper/Snapper, Amberjack, Cobia, Kingfish.
+Methods: bottom fishing, vertical jig, live bait.
+
+Source: Pinellas County Reef Summary PDF", "source": "Pinellas County Reef Summary PDF", "dist_nm": 26.3, "time_18kn": "1 h 28 min", "gmaps": "https://maps.google.com/?q=27.863250,-83.033600", "zone": "Offshore", "type_bucket": "Wreck", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Offshore Reef", "name": "D3 – Boxcars (Deep)", "lat": 27.265516666666667, "lon": -83.12011666666666, "desc": "Official Sarasota County artificial reef / wreck site.
+Targets: Grouper/Snapper, Hogfish; deeper sites add Amberjack.
+Methods: bottom fishing, vertical jig, live bait.
+
+Source: Sarasota County Artificial Reefs PDF", "source": "Sarasota County Artificial Reefs PDF", "dist_nm": 26.5, "time_18kn": "1 h 28 min", "gmaps": "https://maps.google.com/?q=27.265517,-83.120117", "zone": "Offshore", "type_bucket": "Offshore Reef", "depth_ft_lo": 105, "depth_ft_hi": 105, "depth_str": "105 ft / 32 m"}, {"folder": "Reefs / Rev", "name": "R Courtney Campbell Reef", "lat": 27.9633333333, "lon": -82.615, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Reef/hård botten
+⚠️ Noteringar:
+- Generella tips – kontrollera aktuella FWC-regler (säsong/mått/kvot).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 26.8, "time_18kn": "1 h 29 min", "gmaps": "https://maps.google.com/?q=27.963333,-82.615000", "zone": "Offshore", "type_bucket": "Reef", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Bait", "name": "Bait – Clearwater Pass (ström & bait)", "lat": 27.9627976, "lon": -82.8289924, "desc": "Cast-net bait runt pass/kanter.
+Vanligt: Threadfin, Pilchards/Greenbacks.
+
+Source: TopoZone Clearwater Pass", "source": "TopoZone Clearwater Pass", "dist_nm": 26.8, "time_18kn": "1 h 29 min", "gmaps": "https://maps.google.com/?q=27.962798,-82.828992", "zone": "Offshore", "type_bucket": "Bait", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Offshore Reef", "name": "D4 – Boxcars (Deep)", "lat": 27.25733333333333, "lon": -83.11893333333333, "desc": "Official Sarasota County artificial reef / wreck site.
+Targets: Grouper/Snapper, Hogfish; deeper sites add Amberjack.
+Methods: bottom fishing, vertical jig, live bait.
+
+Source: Sarasota County Artificial Reefs PDF", "source": "Sarasota County Artificial Reefs PDF", "dist_nm": 26.8, "time_18kn": "1 h 29 min", "gmaps": "https://maps.google.com/?q=27.257333,-83.118933", "zone": "Offshore", "type_bucket": "Offshore Reef", "depth_ft_lo": 103, "depth_ft_hi": 103, "depth_str": "103 ft / 31 m"}, {"folder": "Passes", "name": "Clearwater Pass (Inshore Edge)", "lat": 27.9627976, "lon": -82.8289924, "desc": "Pass/current seams.
+Targets: Snook, Tarpon (seasonal), Spanish Mackerel, Ladyfish, Jack Crevalle.
+Methods: freelining, jigging along edges; fish moving tide.
+
+Source: TopoZone", "source": "TopoZone", "dist_nm": 26.8, "time_18kn": "1 h 29 min", "gmaps": "https://maps.google.com/?q=27.962798,-82.828992", "zone": "Offshore", "type_bucket": "Inshore Edge", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "M-sites (Manatee)", "name": "M-9 Artificial Reef", "lat": 27.072499999999998, "lon": -82.70056666666666, "desc": "Manatee County 'M-site' artificial reef.
+Targets: Grouper (incl. Goliath), Snapper, Hogfish, Cobia, Kingfish, Amberjack.
+Methods: bottom fishing, live bait, vertical jig.
+
+Source: Local GPS Locations (Sarasota Bay Fishing Charters)", "source": "Local GPS Locations (Sarasota Bay Fishing Charters)", "dist_nm": 27.3, "time_18kn": "1 h 31 min", "gmaps": "https://maps.google.com/?q=27.072500,-82.700567", "zone": "Offshore", "type_bucket": "Offshore Reef", "depth_ft_lo": 60, "depth_ft_hi": 60, "depth_str": "60 ft / 18 m"}, {"folder": "Offshore Reef", "name": "I4 – Venice Bridge & Pier Rubble", "lat": 27.105066666666666, "lon": -82.48175, "desc": "Official Sarasota County artificial reef / wreck site.
+Targets: Grouper/Snapper, Hogfish; deeper sites add Amberjack.
+Methods: bottom fishing, vertical jig, live bait.
+
+Source: Sarasota County Artificial Reefs PDF", "source": "Sarasota County Artificial Reefs PDF", "dist_nm": 28.3, "time_18kn": "1 h 34 min", "gmaps": "https://maps.google.com/?q=27.105067,-82.481750", "zone": "Offshore", "type_bucket": "Offshore Reef", "depth_ft_lo": 25, "depth_ft_hi": 25, "depth_str": "25 ft / 8 m"}, {"folder": "M-sites (Manatee)", "name": "M-16 Artificial Reef", "lat": 27.06383333333333, "lon": -82.59566666666666, "desc": "Manatee County 'M-site' artificial reef.
+Targets: Grouper (incl. Goliath), Snapper, Hogfish, Cobia, Kingfish, Amberjack.
+Methods: bottom fishing, live bait, vertical jig.
+
+Source: Local GPS Locations (Sarasota Bay Fishing Charters)", "source": "Local GPS Locations (Sarasota Bay Fishing Charters)", "dist_nm": 28.5, "time_18kn": "1 h 35 min", "gmaps": "https://maps.google.com/?q=27.063833,-82.595667", "zone": "Offshore", "type_bucket": "Offshore Reef", "depth_ft_lo": 49, "depth_ft_hi": 49, "depth_str": "49 ft / 15 m"}, {"folder": "Inshore Edge", "name": "Venice Inlet V-1 Limestone boulders", "lat": 27.103116666666665, "lon": -82.46428333333333, "desc": "Shallow structure near Venice Inlet.
+Targets: Snook, Redfish, Tarpon (seasonal), Spanish Mackerel.
+Methods: live bait, jigs, freelining on current seams.
+
+Source: Sarasota County Artificial Reefs PDF", "source": "Sarasota County Artificial Reefs PDF", "dist_nm": 28.8, "time_18kn": "1 h 36 min", "gmaps": "https://maps.google.com/?q=27.103117,-82.464283", "zone": "Offshore", "type_bucket": "Inshore Edge", "depth_ft_lo": 17, "depth_ft_hi": 17, "depth_str": "17 ft / 5 m"}, {"folder": "Inshore Edge", "name": "Venice Inlet V-2 Limestone boulders", "lat": 27.100666666666665, "lon": -82.46393333333333, "desc": "Shallow structure near Venice Inlet.
+Targets: Snook, Redfish, Tarpon (seasonal), Spanish Mackerel.
+Methods: live bait, jigs, freelining on current seams.
+
+Source: Sarasota County Artificial Reefs PDF", "source": "Sarasota County Artificial Reefs PDF", "dist_nm": 29.0, "time_18kn": "1 h 37 min", "gmaps": "https://maps.google.com/?q=27.100667,-82.463933", "zone": "Offshore", "type_bucket": "Inshore Edge", "depth_ft_lo": 17, "depth_ft_hi": 17, "depth_str": "17 ft / 5 m"}, {"folder": "Inshore Edge", "name": "Venice Inlet V-3 Limestone boulders", "lat": 27.097816666666667, "lon": -82.46235, "desc": "Shallow structure near Venice Inlet.
+Targets: Snook, Redfish, Tarpon (seasonal), Spanish Mackerel.
+Methods: live bait, jigs, freelining on current seams.
+
+Source: Sarasota County Artificial Reefs PDF", "source": "Sarasota County Artificial Reefs PDF", "dist_nm": 29.1, "time_18kn": "1 h 37 min", "gmaps": "https://maps.google.com/?q=27.097817,-82.462350", "zone": "Offshore", "type_bucket": "Inshore Edge", "depth_ft_lo": 17, "depth_ft_hi": 17, "depth_str": "17 ft / 5 m"}, {"folder": "Inshore Edge", "name": "Venice Inlet V-4 Limestone boulders", "lat": 27.095933333333335, "lon": -82.46163333333334, "desc": "Shallow structure near Venice Inlet.
+Targets: Snook, Redfish, Tarpon (seasonal), Spanish Mackerel.
+Methods: live bait, jigs, freelining on current seams.
+
+Source: Sarasota County Artificial Reefs PDF", "source": "Sarasota County Artificial Reefs PDF", "dist_nm": 29.3, "time_18kn": "1 h 38 min", "gmaps": "https://maps.google.com/?q=27.095933,-82.461633", "zone": "Offshore", "type_bucket": "Inshore Edge", "depth_ft_lo": 17, "depth_ft_hi": 17, "depth_str": "17 ft / 5 m"}, {"folder": "Barges / Pråmar", "name": "B Barge – Rube Allyn area", "lat": 27.93575, "lon": -83.0225333333, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Pråm/konstgjort rev – tydlig struktur
+⚠️ Noteringar:
+- Barges kan ge både bottenfisk och pelagiskt beroende på ström.
+- Kör gärna ett varv med ekolod runt innan första drift.
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Goliath Grouper (ofta C&R / regler kan gälla)
+  • Säsong: året runt (topp ofta vår–höst)
+  • Metod: tungt bottenmete nära struktur/vrak, korta drifter
+  • Bete: live jack/pinfish/grunt, stora chunk baits
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+King Mackerel (Kingfish)
+  • Säsong: vår–höst
+  • Metod: trolling (planer/skim), drift med livebait
+  • Bete: live blue runner, threadfin herring, stora skedar
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 29.4, "time_18kn": "1 h 38 min", "gmaps": "https://maps.google.com/?q=27.935750,-83.022533", "zone": "Offshore", "type_bucket": "Wreck", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Offshore Reef", "name": "Venice Reef (Concrete Culvert)", "lat": 27.07645, "lon": -82.45848333333333, "desc": "Official Sarasota County artificial reef / wreck site.
+Targets: Grouper/Snapper, Hogfish; deeper sites add Amberjack.
+Methods: bottom fishing, vertical jig, live bait.
+
+Source: Sarasota County Artificial Reefs PDF", "source": "Sarasota County Artificial Reefs PDF", "dist_nm": 30.4, "time_18kn": "1 h 41 min", "gmaps": "https://maps.google.com/?q=27.076450,-82.458483", "zone": "Offshore", "type_bucket": "Offshore Reef", "depth_ft_lo": 23, "depth_ft_hi": 23, "depth_str": "23 ft / 7 m"}, {"folder": "Reefs / Rev", "name": "R Clearwater Reef", "lat": 28.0166666667, "lon": -82.895, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Reef/hård botten
+⚠️ Noteringar:
+- Generella tips – kontrollera aktuella FWC-regler (säsong/mått/kvot).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 30.9, "time_18kn": "1 h 43 min", "gmaps": "https://maps.google.com/?q=28.016667,-82.895000", "zone": "Offshore", "type_bucket": "Reef", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Offshore Reef", "name": "D6 – Fiberglass molds/boats (Deep)", "lat": 27.103166666666667, "lon": -83.0532, "desc": "Official Sarasota County artificial reef / wreck site.
+Targets: Grouper/Snapper, Hogfish; deeper sites add Amberjack.
+Methods: bottom fishing, vertical jig, live bait.
+
+Source: Sarasota County Artificial Reefs PDF", "source": "Sarasota County Artificial Reefs PDF", "dist_nm": 31.1, "time_18kn": "1 h 44 min", "gmaps": "https://maps.google.com/?q=27.103167,-83.053200", "zone": "Offshore", "type_bucket": "Offshore Reef", "depth_ft_lo": 110, "depth_ft_hi": 110, "depth_str": "110 ft / 34 m"}, {"folder": "Inshore Edge", "name": "Venice Inlet V-5 Limestone boulders", "lat": 27.065266666666666, "lon": -82.44996666666667, "desc": "Shallow structure near Venice Inlet.
+Targets: Snook, Redfish, Tarpon (seasonal), Spanish Mackerel.
+Methods: live bait, jigs, freelining on current seams.
+
+Source: Sarasota County Artificial Reefs PDF", "source": "Sarasota County Artificial Reefs PDF", "dist_nm": 31.2, "time_18kn": "1 h 44 min", "gmaps": "https://maps.google.com/?q=27.065267,-82.449967", "zone": "Offshore", "type_bucket": "Inshore Edge", "depth_ft_lo": 17, "depth_ft_hi": 17, "depth_str": "17 ft / 5 m"}, {"folder": "Passes", "name": "Hurricane Pass (Inshore Edge)", "lat": 28.0530722, "lon": -82.8151031, "desc": "Pass/current seams.
+Targets: Snook, Tarpon (seasonal), Spanish Mackerel, Ladyfish, Jack Crevalle.
+Methods: freelining, jigging along edges; fish moving tide.
+
+Source: TopoZone", "source": "TopoZone", "dist_nm": 32.0, "time_18kn": "1 h 47 min", "gmaps": "https://maps.google.com/?q=28.053072,-82.815103", "zone": "Offshore", "type_bucket": "Inshore Edge", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Craft", "name": "C 48' Ferro Cement Sailboat – Treasure Island II", "lat": 27.6961333333, "lon": -83.2913166667, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Båtvrak/struktur
+⚠️ Noteringar:
+- Testa både botten och mittvatten (mackerel/cobia kan stå högre).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine", "source": "v4.1", "dist_nm": 32.1, "time_18kn": "1 h 47 min", "gmaps": "https://maps.google.com/?q=27.696133,-83.291317", "zone": "Offshore", "type_bucket": "Other", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Craft", "name": "C 85' Shrimp Boat – Treasure Island II", "lat": 27.69585, "lon": -83.2926166667, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Båtvrak/struktur
+⚠️ Noteringar:
+- Testa både botten och mittvatten (mackerel/cobia kan stå högre).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine", "source": "v4.1", "dist_nm": 32.2, "time_18kn": "1 h 47 min", "gmaps": "https://maps.google.com/?q=27.695850,-83.292617", "zone": "Offshore", "type_bucket": "Other", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Craft", "name": "C 50' Fishing Trawler – Treasure Island II", "lat": 27.6947666667, "lon": -83.29245, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Båtvrak/struktur
+⚠️ Noteringar:
+- Testa både botten och mittvatten (mackerel/cobia kan stå högre).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine", "source": "v4.1", "dist_nm": 32.2, "time_18kn": "1 h 47 min", "gmaps": "https://maps.google.com/?q=27.694767,-83.292450", "zone": "Offshore", "type_bucket": "Other", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Craft", "name": "C 42' Ferro Cement Sailboat – Treasure Island II", "lat": 27.6960166667, "lon": -83.2926333333, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Båtvrak/struktur
+⚠️ Noteringar:
+- Testa både botten och mittvatten (mackerel/cobia kan stå högre).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine", "source": "v4.1", "dist_nm": 32.2, "time_18kn": "1 h 47 min", "gmaps": "https://maps.google.com/?q=27.696017,-83.292633", "zone": "Offshore", "type_bucket": "Other", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Tugs / Cutters", "name": "T 180' Tug “Sheridan” (Pinellas #2)", "lat": 27.8763, "lon": -83.1858333333, "desc": "📏 Djup: ~80 ft (~~24 m)
+🪸 Miljö: Vrak/struktur
+⚠️ Noteringar:
+- Börja up-current och drifta över strukturen.
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Amberjack
+  • Säsong: sommar (kan vara bra vår/höst också)
+  • Metod: vertical jigging eller livebait djupt över vrak
+  • Bete: metal jigs, live blue runner
+
+King Mackerel (Kingfish)
+  • Säsong: vår–höst
+  • Metod: trolling (planer/skim), drift med livebait
+  • Bete: live blue runner, threadfin herring, stora skedar
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 32.5, "time_18kn": "1 h 48 min", "gmaps": "https://maps.google.com/?q=27.876300,-83.185833", "zone": "Offshore", "type_bucket": "Wreck", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Offshore Wreck", "name": "180' Tug 'Sheridan' (Pinellas II)", "lat": 27.8763, "lon": -83.18583333333333, "desc": "Pinellas County wreck/structure site.
+Targets: Grouper/Snapper, Amberjack, Cobia, Kingfish.
+Methods: bottom fishing, vertical jig, live bait.
+
+Source: Pinellas County Reef Summary PDF", "source": "Pinellas County Reef Summary PDF", "dist_nm": 32.5, "time_18kn": "1 h 48 min", "gmaps": "https://maps.google.com/?q=27.876300,-83.185833", "zone": "Offshore", "type_bucket": "Wreck", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Tugs / Cutters", "name": "T USCG Cutter “Blackthorn” (Pinellas #2)", "lat": 27.875, "lon": -83.19, "desc": "📏 Djup: ~80 ft (~~24 m)
+🪸 Miljö: Stort vrak/struktur
+⚠️ Noteringar:
+- Ström kan vara stark – drifta kontrollerat.
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Amberjack
+  • Säsong: sommar (kan vara bra vår/höst också)
+  • Metod: vertical jigging eller livebait djupt över vrak
+  • Bete: metal jigs, live blue runner
+
+King Mackerel (Kingfish)
+  • Säsong: vår–höst
+  • Metod: trolling (planer/skim), drift med livebait
+  • Bete: live blue runner, threadfin herring, stora skedar
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Goliath Grouper (ofta C&R / regler kan gälla)
+  • Säsong: året runt (topp ofta vår–höst)
+  • Metod: tungt bottenmete nära struktur/vrak, korta drifter
+  • Bete: live jack/pinfish/grunt, stora chunk baits", "source": "v4.1", "dist_nm": 32.6, "time_18kn": "1 h 49 min", "gmaps": "https://maps.google.com/?q=27.875000,-83.190000", "zone": "Offshore", "type_bucket": "Wreck", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Offshore Wreck", "name": "USCG Cutter 'Blackthorn' (Pinellas II)", "lat": 27.875, "lon": -83.19, "desc": "Pinellas County wreck/structure site.
+Targets: Grouper/Snapper, Amberjack, Cobia, Kingfish.
+Methods: bottom fishing, vertical jig, live bait.
+
+Source: Pinellas County Reef Summary PDF", "source": "Pinellas County Reef Summary PDF", "dist_nm": 32.6, "time_18kn": "1 h 49 min", "gmaps": "https://maps.google.com/?q=27.875000,-83.190000", "zone": "Offshore", "type_bucket": "Wreck", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Barges / Pråmar", "name": "B Seafood Barge – Pinellas #2", "lat": 27.8768, "lon": -83.1885, "desc": "📏 Djup: ~80 ft (~~24 m)
+🪸 Miljö: Pråm/konstgjort rev – tydlig struktur
+⚠️ Noteringar:
+- Barges kan ge både bottenfisk och pelagiskt beroende på ström.
+- Kör gärna ett varv med ekolod runt innan första drift.
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Goliath Grouper (ofta C&R / regler kan gälla)
+  • Säsong: året runt (topp ofta vår–höst)
+  • Metod: tungt bottenmete nära struktur/vrak, korta drifter
+  • Bete: live jack/pinfish/grunt, stora chunk baits
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+King Mackerel (Kingfish)
+  • Säsong: vår–höst
+  • Metod: trolling (planer/skim), drift med livebait
+  • Bete: live blue runner, threadfin herring, stora skedar
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 32.7, "time_18kn": "1 h 49 min", "gmaps": "https://maps.google.com/?q=27.876800,-83.188500", "zone": "Offshore", "type_bucket": "Wreck", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Reefs / Rev", "name": "R Dunedin Reef", "lat": 28.0533333333, "lon": -82.91, "desc": "📏 Djup: okänt (~okänt)
+🪸 Miljö: Reef/hård botten
+⚠️ Noteringar:
+- Generella tips – kontrollera aktuella FWC-regler (säsong/mått/kvot).
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Lane Snapper
+  • Säsong: vår–höst
+  • Metod: bottenmete på sand/patch reef nära struktur
+  • Bete: shrimp, squid bits, cut bait
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 33.2, "time_18kn": "1 h 51 min", "gmaps": "https://maps.google.com/?q=28.053333,-82.910000", "zone": "Offshore", "type_bucket": "Reef", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Military", "name": "M Veterans Reef – Bomber Airplane", "lat": 28.04725, "lon": -83.0120333333, "desc": "📏 Djup: ~43–47 ft (~~13–14 m)
+🪸 Miljö: Militär struktur (flygplan på reef)
+⚠️ Noteringar:
+- Ofta bra betesfisk här – håll koll på bird activity.
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+King Mackerel (Kingfish)
+  • Säsong: vår–höst
+  • Metod: trolling (planer/skim), drift med livebait
+  • Bete: live blue runner, threadfin herring, stora skedar
+
+Spanish Mackerel
+  • Säsong: vår–sensommar
+  • Metod: trolling små skedar, kasta jigs längs kanter
+  • Bete: small spoons, jigs, live shrimp
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+Goliath Grouper (ofta C&R / regler kan gälla)
+  • Säsong: året runt (topp ofta vår–höst)
+  • Metod: tungt bottenmete nära struktur/vrak, korta drifter
+  • Bete: live jack/pinfish/grunt, stora chunk baits", "source": "v4.1", "dist_nm": 34.9, "time_18kn": "1 h 56 min", "gmaps": "https://maps.google.com/?q=28.047250,-83.012033", "zone": "Offshore", "type_bucket": "Other", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Barges / Pråmar", "name": "B Veterans Reef – 3 Barges", "lat": 28.0496666667, "lon": -83.01235, "desc": "📏 Djup: ~43–47 ft (~~13–14 m)
+🪸 Miljö: Pråm/konstgjort rev – tydlig struktur
+⚠️ Noteringar:
+- Barges kan ge både bottenfisk och pelagiskt beroende på ström.
+- Kör gärna ett varv med ekolod runt innan första drift.
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Goliath Grouper (ofta C&R / regler kan gälla)
+  • Säsong: året runt (topp ofta vår–höst)
+  • Metod: tungt bottenmete nära struktur/vrak, korta drifter
+  • Bete: live jack/pinfish/grunt, stora chunk baits
+
+Mangrove Snapper
+  • Säsong: året runt (ofta bäst sommar–höst)
+  • Metod: lättare bottenmete, chumming kan hjälpa
+  • Bete: shrimp, small cut bait, live pilchard
+
+Gag Grouper
+  • Säsong: vår–höst (kallare månader kan funka djupare)
+  • Metod: bottenmete på kanter/vrak, håll betet nära botten
+  • Bete: live pinfish/grunt, squid, cut sardine
+
+King Mackerel (Kingfish)
+  • Säsong: vår–höst
+  • Metod: trolling (planer/skim), drift med livebait
+  • Bete: live blue runner, threadfin herring, stora skedar
+
+Cobia
+  • Säsong: vår–sommar
+  • Metod: sight-cast vid bojar/vrak, trolling runt struktur
+  • Bete: eel, crab, live pinfish, bucktail jigs", "source": "v4.1", "dist_nm": 35.1, "time_18kn": "1 h 57 min", "gmaps": "https://maps.google.com/?q=28.049667,-83.012350", "zone": "Offshore", "type_bucket": "Wreck", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Hemmahamn", "name": "Hemmahamn – 512 Bayview Pl (Anna Maria)", "lat": 27.53, "lon": -82.0, "desc": "📏 Djup: —
+🪸 Miljö: Startpunkt
+⚠️ Noteringar:
+- Tid vid 18 knop: tid (h) = distans (nm) / 18. (1 nm ≈ 1.852 km)
+- Använd Google Earth 'Mät' från hemmahamnen till en punkt.
+
+🎣 Mål-fisk & hur (säsong • metod • bete)
+
+Inshore nära pass/kanter
+  • Säsong: året runt
+  • Metod: casting + livebait
+  • Bete: shrimp/pilchards/jigs", "source": "v4.1", "dist_nm": 38.3, "time_18kn": "2 h 8 min", "gmaps": "https://maps.google.com/?q=27.530000,-82.000000", "zone": "Offshore", "type_bucket": "Other", "depth_ft_lo": null, "depth_ft_hi": null, "depth_str": "varies"}, {"folder": "Offshore Wreck", "name": "D-9 – Steel Crane Barge (Deep)", "lat": 26.911983333333332, "lon": -82.93155, "desc": "Official Sarasota County artificial reef / wreck site.
+Targets: Grouper/Snapper, Hogfish; deeper sites add Amberjack.
+Methods: bottom fishing, vertical jig, live bait.
+
+Source: Sarasota County Artificial Reefs PDF", "source": "Sarasota County Artificial Reefs PDF", "dist_nm": 38.6, "time_18kn": "2 h 9 min", "gmaps": "https://maps.google.com/?q=26.911983,-82.931550", "zone": "Offshore", "type_bucket": "Wreck", "depth_ft_lo": 100, "depth_ft_hi": 100, "depth_str": "100 ft / 30 m"}]};
+
+const folderSel = document.getElementById('folder');
+DATA.folders.forEach(f => {
+  const o = document.createElement('option');
+  o.value = f; o.textContent = f;
+  folderSel.appendChild(o);
+});
+
+const speciesSel = document.getElementById('species');
+DATA.species.forEach(s => {
+  const o = document.createElement('option');
+  o.value = s; o.textContent = s;
+  speciesSel.appendChild(o);
+});
+
+const state = { q:"", folder:"__all__", zone:"__all__", sort:"dist", species:"__all__" };
+
+function zoneClass(z) {
+  if (z === "Inshore") return "z-inshore";
+  if (z === "Nearshore") return "z-nearshore";
+  return "z-offshore";
+}
+
+function typeClass(t) {
+  if (t === "Reef") return "t-reef";
+  if (t === "Wreck") return "t-wreck";
+  if (t === "Inshore") return "t-inshore";
+  if (t === "Bait") return "t-bait";
+  return "";
+}
+
+function card(it) {
+  const div = document.createElement('div');
+  div.className = 'card';
+
+  const title = document.createElement('div');
+  title.className = 'title';
+  title.textContent = it.name;
+  div.appendChild(title);
+
+  const row1 = document.createElement('div');
+  row1.className = 'row';
+  row1.innerHTML = `📍 ${it.lat.toFixed(6)}, ${it.lon.toFixed(6)} • 🧭 <b>${it.dist_nm.toFixed(1)} NM</b> • ⏱️ <b>${it.time_18kn}</b> • 🌊 <b>${it.depth_str || 'varies'}</b>`;
+  div.appendChild(row1);
+
+  const row2 = document.createElement('div');
+  row2.className = 'row';
+  row2.innerHTML = `🔗 <a href="${it.gmaps}" target="_blank" rel="noopener">Öppna i Google Maps</a>`;
+  div.appendChild(row2);
+
+  const badges = document.createElement('div');
+  badges.className = 'badges';
+  const b1 = document.createElement('div'); b1.className = `badge ${zoneClass(it.zone)}`; b1.textContent = it.zone;
+  const b2 = document.createElement('div'); b2.className = `badge ${typeClass(it.type_bucket)}`; b2.textContent = it.type_bucket;
+  const b3 = document.createElement('div'); b3.className = 'badge'; b3.textContent = it.folder;
+  badges.appendChild(b1); badges.appendChild(b2); badges.appendChild(b3);
+  div.appendChild(badges);
+
+  if (it.desc && it.desc.trim().length > 0) {
+    const det = document.createElement('details');
+    const sum = document.createElement('summary');
+    sum.textContent = 'Visa detaljer (arter • metod • bete • anteckningar)';
+    const pre = document.createElement('pre');
+    pre.textContent = it.desc;
+    det.appendChild(sum);
+    det.appendChild(pre);
+    div.appendChild(det);
+  }
+  return div;
+}
+
+function apply() {
+  const q = state.q.trim().toLowerCase();
+  let arr = DATA.items.slice();
+
+  if (state.folder !== "__all__") arr = arr.filter(x => x.folder === state.folder);
+  if (state.zone !== "__all__") arr = arr.filter(x => x.zone === state.zone);
+
+  if (state.species !== "__all__") {
+    const s = state.species.toLowerCase();
+    arr = arr.filter(x => ((x.desc||"").toLowerCase().includes(s) || (x.name||"").toLowerCase().includes(s)));
+  }
+
+  if (q.length) {
+    arr = arr.filter(x => {
+      const hay = (x.name + " " + x.folder + " " + x.zone + " " + x.type_bucket + " " + (x.desc||"") + " " + x.dist_nm + " " + x.time_18kn).toLowerCase();
+      return hay.includes(q);
+    });
+  }
+
+  if (state.sort === "dist") arr.sort((a,b) => a.dist_nm - b.dist_nm);
+  else if (state.sort === "name") arr.sort((a,b) => a.name.localeCompare(b.name, "sv"));
+  else if (state.sort === "folder") arr.sort((a,b) => (a.folder.localeCompare(b.folder,"sv") || (a.dist_nm-b.dist_nm)));
+
+  const grid = document.getElementById('grid');
+  grid.innerHTML = "";
+  arr.forEach(x => grid.appendChild(card(x)));
+  document.getElementById('count').textContent = `Visar ${arr.length} av ${DATA.items.length} spots`;
+}
+
+document.getElementById('q').addEventListener('input', (e) => { state.q = e.target.value; 
+function pickTop(filterFn, n=8) {
+  return DATA.items.filter(filterFn).sort((a,b)=>a.dist_nm-b.dist_nm).slice(0,n);
+}
+function linkItem(it) {
+  return `<li><a href="${it.gmaps}" target="_blank" rel="noopener">${it.name}</a> <span style="opacity:.75">(${it.dist_nm.toFixed(1)} NM • ${it.time_18kn} • ${it.depth_str||'varies'})</span></li>`;
+}
+function renderTopLists() {
+  const el = document.getElementById('toplists');
+  if (!el) return;
+  const groups = [
+    {title:"👑 Topp Snook / Redfish (Flats & Edges)", fn:(x)=> (x.type_bucket==="Inshore Flats" || x.type_bucket==="Inshore Edge")},
+    {title:"🎣 Topp Grouper / Snapper (Reef & Wreck)", fn:(x)=> (x.type_bucket==="Reef" || x.type_bucket==="Wreck" || x.type_bucket==="Offshore Reef")},
+    {title:"⚓ Topp Amberjack (Offshore struktur)", fn:(x)=> (x.zone==="Offshore") && (x.type_bucket==="Offshore Reef" || x.type_bucket==="Wreck")},
+    {title:"🐬 Topp Kingfish / Cobia (Pass & Offshore)", fn:(x)=> (x.type_bucket==="Inshore Edge" || x.type_bucket==="Offshore Reef" || x.type_bucket==="Wreck")},
+    {title:"🪶 Topp Bait (kastnät/sabiki)", fn:(x)=> (x.type_bucket==="Bait")},
+  ];
+  let html = `<div class="title" style="margin-bottom:8px">Topplistor (per art/genre)</div>`;
+  html += `<div class="row" style="opacity:.85;margin-bottom:10px">Klicka en spot → öppna i Google Maps. Topplistorna väljer “närmast först” inom rätt typ.</div>`;
+  groups.forEach(g=>{
+    const arr = pickTop(g.fn, 8);
+    html += `<details style="margin-top:8px"><summary><b>${g.title}</b> — ${arr.length} spots</summary><ul style="margin:8px 0 0 18px">${arr.map(linkItem).join("")}</ul></details>`;
+  });
+  el.innerHTML = html;
+}
+
+renderTopLists();
+apply(); });
+document.getElementById('folder').addEventListener('change', (e) => { state.folder = e.target.value; 
+function pickTop(filterFn, n=8) {
+  return DATA.items.filter(filterFn).sort((a,b)=>a.dist_nm-b.dist_nm).slice(0,n);
+}
+function linkItem(it) {
+  return `<li><a href="${it.gmaps}" target="_blank" rel="noopener">${it.name}</a> <span style="opacity:.75">(${it.dist_nm.toFixed(1)} NM • ${it.time_18kn} • ${it.depth_str||'varies'})</span></li>`;
+}
+function renderTopLists() {
+  const el = document.getElementById('toplists');
+  if (!el) return;
+  const groups = [
+    {title:"👑 Topp Snook / Redfish (Flats & Edges)", fn:(x)=> (x.type_bucket==="Inshore Flats" || x.type_bucket==="Inshore Edge")},
+    {title:"🎣 Topp Grouper / Snapper (Reef & Wreck)", fn:(x)=> (x.type_bucket==="Reef" || x.type_bucket==="Wreck" || x.type_bucket==="Offshore Reef")},
+    {title:"⚓ Topp Amberjack (Offshore struktur)", fn:(x)=> (x.zone==="Offshore") && (x.type_bucket==="Offshore Reef" || x.type_bucket==="Wreck")},
+    {title:"🐬 Topp Kingfish / Cobia (Pass & Offshore)", fn:(x)=> (x.type_bucket==="Inshore Edge" || x.type_bucket==="Offshore Reef" || x.type_bucket==="Wreck")},
+    {title:"🪶 Topp Bait (kastnät/sabiki)", fn:(x)=> (x.type_bucket==="Bait")},
+  ];
+  let html = `<div class="title" style="margin-bottom:8px">Topplistor (per art/genre)</div>`;
+  html += `<div class="row" style="opacity:.85;margin-bottom:10px">Klicka en spot → öppna i Google Maps. Topplistorna väljer “närmast först” inom rätt typ.</div>`;
+  groups.forEach(g=>{
+    const arr = pickTop(g.fn, 8);
+    html += `<details style="margin-top:8px"><summary><b>${g.title}</b> — ${arr.length} spots</summary><ul style="margin:8px 0 0 18px">${arr.map(linkItem).join("")}</ul></details>`;
+  });
+  el.innerHTML = html;
+}
+
+renderTopLists();
+apply(); });
+document.getElementById('species').addEventListener('change', (e) => { state.species = e.target.value; 
+function pickTop(filterFn, n=8) {
+  return DATA.items.filter(filterFn).sort((a,b)=>a.dist_nm-b.dist_nm).slice(0,n);
+}
+function linkItem(it) {
+  return `<li><a href="${it.gmaps}" target="_blank" rel="noopener">${it.name}</a> <span style="opacity:.75">(${it.dist_nm.toFixed(1)} NM • ${it.time_18kn} • ${it.depth_str||'varies'})</span></li>`;
+}
+function renderTopLists() {
+  const el = document.getElementById('toplists');
+  if (!el) return;
+  const groups = [
+    {title:"👑 Topp Snook / Redfish (Flats & Edges)", fn:(x)=> (x.type_bucket==="Inshore Flats" || x.type_bucket==="Inshore Edge")},
+    {title:"🎣 Topp Grouper / Snapper (Reef & Wreck)", fn:(x)=> (x.type_bucket==="Reef" || x.type_bucket==="Wreck" || x.type_bucket==="Offshore Reef")},
+    {title:"⚓ Topp Amberjack (Offshore struktur)", fn:(x)=> (x.zone==="Offshore") && (x.type_bucket==="Offshore Reef" || x.type_bucket==="Wreck")},
+    {title:"🐬 Topp Kingfish / Cobia (Pass & Offshore)", fn:(x)=> (x.type_bucket==="Inshore Edge" || x.type_bucket==="Offshore Reef" || x.type_bucket==="Wreck")},
+    {title:"🪶 Topp Bait (kastnät/sabiki)", fn:(x)=> (x.type_bucket==="Bait")},
+  ];
+  let html = `<div class="title" style="margin-bottom:8px">Topplistor (per art/genre)</div>`;
+  html += `<div class="row" style="opacity:.85;margin-bottom:10px">Klicka en spot → öppna i Google Maps. Topplistorna väljer “närmast först” inom rätt typ.</div>`;
+  groups.forEach(g=>{
+    const arr = pickTop(g.fn, 8);
+    html += `<details style="margin-top:8px"><summary><b>${g.title}</b> — ${arr.length} spots</summary><ul style="margin:8px 0 0 18px">${arr.map(linkItem).join("")}</ul></details>`;
+  });
+  el.innerHTML = html;
+}
+
+renderTopLists();
+apply(); });
+document.getElementById('sort').addEventListener('change', (e) => { state.sort = e.target.value; 
+function pickTop(filterFn, n=8) {
+  return DATA.items.filter(filterFn).sort((a,b)=>a.dist_nm-b.dist_nm).slice(0,n);
+}
+function linkItem(it) {
+  return `<li><a href="${it.gmaps}" target="_blank" rel="noopener">${it.name}</a> <span style="opacity:.75">(${it.dist_nm.toFixed(1)} NM • ${it.time_18kn} • ${it.depth_str||'varies'})</span></li>`;
+}
+function renderTopLists() {
+  const el = document.getElementById('toplists');
+  if (!el) return;
+  const groups = [
+    {title:"👑 Topp Snook / Redfish (Flats & Edges)", fn:(x)=> (x.type_bucket==="Inshore Flats" || x.type_bucket==="Inshore Edge")},
+    {title:"🎣 Topp Grouper / Snapper (Reef & Wreck)", fn:(x)=> (x.type_bucket==="Reef" || x.type_bucket==="Wreck" || x.type_bucket==="Offshore Reef")},
+    {title:"⚓ Topp Amberjack (Offshore struktur)", fn:(x)=> (x.zone==="Offshore") && (x.type_bucket==="Offshore Reef" || x.type_bucket==="Wreck")},
+    {title:"🐬 Topp Kingfish / Cobia (Pass & Offshore)", fn:(x)=> (x.type_bucket==="Inshore Edge" || x.type_bucket==="Offshore Reef" || x.type_bucket==="Wreck")},
+    {title:"🪶 Topp Bait (kastnät/sabiki)", fn:(x)=> (x.type_bucket==="Bait")},
+  ];
+  let html = `<div class="title" style="margin-bottom:8px">Topplistor (per art/genre)</div>`;
+  html += `<div class="row" style="opacity:.85;margin-bottom:10px">Klicka en spot → öppna i Google Maps. Topplistorna väljer “närmast först” inom rätt typ.</div>`;
+  groups.forEach(g=>{
+    const arr = pickTop(g.fn, 8);
+    html += `<details style="margin-top:8px"><summary><b>${g.title}</b> — ${arr.length} spots</summary><ul style="margin:8px 0 0 18px">${arr.map(linkItem).join("")}</ul></details>`;
+  });
+  el.innerHTML = html;
+}
+
+renderTopLists();
+apply(); });
+
+document.getElementById('zones').addEventListener('click', (e) => {
+  const t = e.target.closest('.chip');
+  if (!t) return;
+  document.querySelectorAll('#zones .chip').forEach(c => c.classList.remove('active'));
+  t.classList.add('active');
+  state.zone = t.dataset.zone;
+  
+function pickTop(filterFn, n=8) {
+  return DATA.items.filter(filterFn).sort((a,b)=>a.dist_nm-b.dist_nm).slice(0,n);
+}
+function linkItem(it) {
+  return `<li><a href="${it.gmaps}" target="_blank" rel="noopener">${it.name}</a> <span style="opacity:.75">(${it.dist_nm.toFixed(1)} NM • ${it.time_18kn} • ${it.depth_str||'varies'})</span></li>`;
+}
+function renderTopLists() {
+  const el = document.getElementById('toplists');
+  if (!el) return;
+  const groups = [
+    {title:"👑 Topp Snook / Redfish (Flats & Edges)", fn:(x)=> (x.type_bucket==="Inshore Flats" || x.type_bucket==="Inshore Edge")},
+    {title:"🎣 Topp Grouper / Snapper (Reef & Wreck)", fn:(x)=> (x.type_bucket==="Reef" || x.type_bucket==="Wreck" || x.type_bucket==="Offshore Reef")},
+    {title:"⚓ Topp Amberjack (Offshore struktur)", fn:(x)=> (x.zone==="Offshore") && (x.type_bucket==="Offshore Reef" || x.type_bucket==="Wreck")},
+    {title:"🐬 Topp Kingfish / Cobia (Pass & Offshore)", fn:(x)=> (x.type_bucket==="Inshore Edge" || x.type_bucket==="Offshore Reef" || x.type_bucket==="Wreck")},
+    {title:"🪶 Topp Bait (kastnät/sabiki)", fn:(x)=> (x.type_bucket==="Bait")},
+  ];
+  let html = `<div class="title" style="margin-bottom:8px">Topplistor (per art/genre)</div>`;
+  html += `<div class="row" style="opacity:.85;margin-bottom:10px">Klicka en spot → öppna i Google Maps. Topplistorna väljer “närmast först” inom rätt typ.</div>`;
+  groups.forEach(g=>{
+    const arr = pickTop(g.fn, 8);
+    html += `<details style="margin-top:8px"><summary><b>${g.title}</b> — ${arr.length} spots</summary><ul style="margin:8px 0 0 18px">${arr.map(linkItem).join("")}</ul></details>`;
+  });
+  el.innerHTML = html;
+}
+
+renderTopLists();
+apply();
+});
+
+
+function pickTop(filterFn, n=8) {
+  return DATA.items.filter(filterFn).sort((a,b)=>a.dist_nm-b.dist_nm).slice(0,n);
+}
+function linkItem(it) {
+  return `<li><a href="${it.gmaps}" target="_blank" rel="noopener">${it.name}</a> <span style="opacity:.75">(${it.dist_nm.toFixed(1)} NM • ${it.time_18kn} • ${it.depth_str||'varies'})</span></li>`;
+}
+function renderTopLists() {
+  const el = document.getElementById('toplists');
+  if (!el) return;
+  const groups = [
+    {title:"👑 Topp Snook / Redfish (Flats & Edges)", fn:(x)=> (x.type_bucket==="Inshore Flats" || x.type_bucket==="Inshore Edge")},
+    {title:"🎣 Topp Grouper / Snapper (Reef & Wreck)", fn:(x)=> (x.type_bucket==="Reef" || x.type_bucket==="Wreck" || x.type_bucket==="Offshore Reef")},
+    {title:"⚓ Topp Amberjack (Offshore struktur)", fn:(x)=> (x.zone==="Offshore") && (x.type_bucket==="Offshore Reef" || x.type_bucket==="Wreck")},
+    {title:"🐬 Topp Kingfish / Cobia (Pass & Offshore)", fn:(x)=> (x.type_bucket==="Inshore Edge" || x.type_bucket==="Offshore Reef" || x.type_bucket==="Wreck")},
+    {title:"🪶 Topp Bait (kastnät/sabiki)", fn:(x)=> (x.type_bucket==="Bait")},
+  ];
+  let html = `<div class="title" style="margin-bottom:8px">Topplistor (per art/genre)</div>`;
+  html += `<div class="row" style="opacity:.85;margin-bottom:10px">Klicka en spot → öppna i Google Maps. Topplistorna väljer “närmast först” inom rätt typ.</div>`;
+  groups.forEach(g=>{
+    const arr = pickTop(g.fn, 8);
+    html += `<details style="margin-top:8px"><summary><b>${g.title}</b> — ${arr.length} spots</summary><ul style="margin:8px 0 0 18px">${arr.map(linkItem).join("")}</ul></details>`;
+  });
+  el.innerHTML = html;
+}
+
+renderTopLists();
+apply();
+</script>
+</body>
+</html>
