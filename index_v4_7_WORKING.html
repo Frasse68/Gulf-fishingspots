@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>GulfFishing v4.7 – Sök & filter</title>
+<style>
+:root{color-scheme:dark;}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;background:#0b1220;color:#e6edf3}
+header{position:sticky;top:0;z-index:10;background:rgba(11,18,32,.92);backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,.08);padding:14px 14px 10px}
+h1{margin:0 0 6px;font-size:20px}
+small{color:#9fb0c0}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
+input[type="text"]{flex:1;min-width:220px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:#0f172a;color:#e6edf3}
+select,button{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:#0f172a;color:#e6edf3}
+button{cursor:pointer}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{padding:8px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);cursor:pointer;font-size:13px}
+.chip.active{background:rgba(59,130,246,.25);border-color:rgba(59,130,246,.55)}
+main{padding:14px;max-width:1100px;margin:0 auto}
+.meta{margin:10px 0 14px;color:#9fb0c0;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+.card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:14px;padding:12px}
+.card h3{margin:0 0 8px;font-size:16px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:13px;color:#c9d4df}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.12);font-size:12px}
+a{color:#60a5fa;text-decoration:none}
+details{margin-top:10px}
+summary{cursor:pointer;color:#c9d4df}
+hr{border:none;border-top:1px solid rgba(255,255,255,.10);margin:10px 0}
+#topPanelBackdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;z-index:50}
+#topPanel{position:fixed;right:12px;top:76px;max-width:520px;width:calc(100% - 24px);background:#0b1220;border:1px solid rgba(255,255,255,.14);border-radius:14px;display:none;z-index:60}
+#topPanel header{position:unset;background:transparent;border:none;padding:12px 12px 0}
+#topPanel .body{padding:0 12px 12px}
+.topRow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.topRow select{flex:1;min-width:160px}
+.topList{margin-top:10px}
+.topItem{padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.05);margin-bottom:8px}
+.topItem .t{font-weight:600}
+.kicker{color:#9fb0c0;font-size:12px;margin-top:2px}
+</style>
+</head>
+<body>
+<header>
+  <h1>GulfFishing v4.7 – Sök & filter</h1>
+  <small>Hemmahamm: 27.526500, -82.718611 · Genererad: 2026-01-01</small>
+  <div class="controls">
+    <input id="q" type="text" placeholder="Sök: snook, redfish, grass, bait, pass, wreck, 30 nm, Venice…"/>
+    <select id="typeSel"></select>
+    <select id="sortSel">
+      <option value="near">Sortera: närmast först</option>
+      <option value="far">Sortera: längst bort först</option>
+      <option value="az">Sortera: A–Ö</option>
+    </select>
+    <button id="topBtn" title="Topplista (fisk/art + typ)">🏆 Topplista</button>
+  </div>
+  <div class="chips" id="zoneChips"></div>
+</header>
+
+<main>
+  <div class="meta" id="meta"></div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<div id="topPanelBackdrop"></div>
+<div id="topPanel">
+  <header>
+    <div class="topRow">
+      <strong>Topplista</strong>
+      <span style="flex:1"></span>
+      <button id="topClose">✕</button>
+    </div>
+  </header>
+  <div class="body">
+    <div class="topRow">
+      <select id="fishSel"></select>
+      <select id="topTypeSel"></select>
+      <select id="topZoneSel">
+        <option value="all">Alla zoner</option>
+        <option value="Inshore (≤10 NM)">Inshore (≤10 NM)</option>
+        <option value="Nearshore (10–25 NM)">Nearshore (10–25 NM)</option>
+        <option value="Offshore (≥25 NM)">Offshore (≥25 NM)</option>
+      </select>
+    </div>
+    <div class="kicker">Visar topp 10 (närmast hemmahamm) som matchar ditt val.</div>
+    <div class="topList" id="topList"></div>
+    <hr/>
+    <div class="kicker"><strong>Vind-/väder-tips (snabbt)</strong></div>
+    <div class="kicker">
+      <ul>
+        <li><b>Inshore/Flats:</b> lätt–måttlig vind ger bäst sikt; undvik långvarig hård vind som grumlar flats.</li>
+        <li><b>Pass/Strömkanter:</b> planera kring tidvatten/ström. Motvind + ström = jobbig sjö.</li>
+        <li><b>Nearshore/Offshore:</b> kolla vindriktning + swell-period. Vid <b>NV–N</b> byggs ofta grov sjö snabbare.</li>
+        <li><b>Åska:</b> avbryt, särskilt på öppet vatten.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+const HOME = {lat:27.5265, lon:-82.718611};
+const SPOTS = [{"name": "Bait – Bean Point (cast net)", "lat": 27.538, "lon": -82.744, "type": "Bait", "zone": "Inshore (≤10 NM)", "nm": 1.5178690609466097, "notes": "Zone: Inshore (≤10 NM)<br/>Depth: 8 ft (2.4 m)<br/>Species: Whitebait / Pilchards, Threadfin Herring, Pinfish, Shrimp"}, {"name": "R Bulkhead Reef", "lat": 27.553333, "lon": -82.706667, "type": "Reef", "zone": "Inshore (≤10 NM)", "nm": 1.7320094946845281, "notes": "Zone: Inshore (≤10 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Bait – Passage Key (flats/kanter)", "lat": 27.556702, "lon": -82.743156, "type": "Bait", "zone": "Inshore (≤10 NM)", "nm": 2.235092906418964, "notes": "Zone: Inshore (≤10 NM)<br/>Species: Whitebait / Pilchards, Threadfin Herring, Pinfish, Shrimp"}, {"name": "R 1-mile Reef North", "lat": 27.49, "lon": -82.735, "type": "Reef", "zone": "Inshore (≤10 NM)", "nm": 2.358871115432044, "notes": "Zone: Inshore (≤10 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Grass – Palma Sola Bay flats edge", "lat": 27.525, "lon": -82.67, "type": "Grass flats", "zone": "Inshore (≤10 NM)", "nm": 2.5898139180921946, "notes": "Zone: Inshore (≤10 NM)<br/>Depth: 3 ft (0.9 m)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)<br/>Notes: (justerad västerut för att hamna i vattnet)"}, {"name": "R Southeast Tampa Reef", "lat": 27.548333, "lon": -82.671667, "type": "Reef", "zone": "Inshore (≤10 NM)", "nm": 2.8221419005380564, "notes": "Zone: Inshore (≤10 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Wreck – SS Regina (Bradenton Beach area)", "lat": 27.4689, "lon": -82.7022, "type": "Wreck", "zone": "Inshore (≤10 NM)", "nm": 3.56706381694561, "notes": "Zone: Nearshore<br/>Depth: 20 ft (6.1 m)<br/>Species: Goliath Grouper, Grouper, Snapper, Kingfish, Barracuda, Amberjack<br/>Method: anchor & fish structure edges, freeline/livebait, vertical jigging<br/>Bait: live pinfish, blue runner, threadfin herring, large jigs<br/>Notes: Känd historisk wreck nära Bradenton Beach. Kontrollera lokala regler/zoner."}, {"name": "R 3-mile Reef North", "lat": 27.5, "lon": -82.783333, "type": "Reef", "zone": "Inshore (≤10 NM)", "nm": 3.795992397299032, "notes": "Zone: Inshore (≤10 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "R Manatee River – Emerson Point", "lat": 27.53, "lon": -82.646667, "type": "Reef", "zone": "Inshore (≤10 NM)", "nm": 3.8362641350231894, "notes": "Zone: Inshore (≤10 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Longboat Pass (Inshore Edge)", "lat": 27.443929, "lon": -82.6876, "type": "Pass / Current", "zone": "Inshore (≤10 NM)", "nm": 5.225525294799693, "notes": "Zone: Inshore (≤10 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "Bait – Longboat Pass (ström & bait)", "lat": 27.443929, "lon": -82.6876, "type": "Bait", "zone": "Inshore (≤10 NM)", "nm": 5.225525294799693, "notes": "Zone: Inshore (≤10 NM)<br/>Species: Whitebait / Pilchards, Threadfin Herring, Pinfish, Shrimp"}, {"name": "Fort De Soto – grass flats/edges", "lat": 27.619755, "lon": -82.7276, "type": "Spot", "zone": "Inshore (≤10 NM)", "nm": 5.61947394248397, "notes": "Zone: Inshore (≤10 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Grass – Terra Ceia Bay flats edge", "lat": 27.583, "lon": -82.628, "type": "Grass flats", "zone": "Inshore (≤10 NM)", "nm": 5.896702573605656, "notes": "Zone: Inshore (≤10 NM)<br/>Depth: 4 ft (1.2 m)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "Bait – Sunshine Skyway (pylons/ström)", "lat": 27.62025, "lon": -82.65548, "type": "Bait", "zone": "Inshore (≤10 NM)", "nm": 6.555317947471911, "notes": "Zone: Inshore (≤10 NM)<br/>Species: Whitebait / Pilchards, Threadfin Herring, Pinfish, Shrimp"}, {"name": "B Meisner Barge (100' barge)", "lat": 27.545, "lon": -82.845, "type": "Spot", "zone": "Inshore (≤10 NM)", "nm": 6.819913203237269, "notes": "Zone: Inshore (≤10 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Bait – Longbar/Whitney (cast net)", "lat": 27.525, "lon": -82.588, "type": "Bait", "zone": "Inshore (≤10 NM)", "nm": 6.954844165767085, "notes": "Zone: Inshore (≤10 NM)<br/>Depth: 6 ft (1.8 m)<br/>Species: Whitebait / Pilchards, Threadfin Herring, Pinfish, Shrimp"}, {"name": "Bait – Bunces Pass (tid/strömkant)", "lat": 27.645865, "lon": -82.728434, "type": "Bait", "zone": "Inshore (≤10 NM)", "nm": 7.1857673294785185, "notes": "Zone: Inshore (≤10 NM)<br/>Species: Whitebait / Pilchards, Threadfin Herring, Pinfish, Shrimp"}, {"name": "R 7-mile Reef North", "lat": 27.445, "lon": -82.82, "type": "Reef", "zone": "Inshore (≤10 NM)", "nm": 7.2875144413141175, "notes": "Zone: Inshore (≤10 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "S USS Narcissus (Egmont Key – approx)", "lat": 27.6258, "lon": -82.7997, "type": "Spot", "zone": "Inshore (≤10 NM)", "nm": 7.359987809372382, "notes": "Zone: Inshore (≤10 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Bait – Pass-a-Grille Channel (strömkant)", "lat": 27.690586, "lon": -82.731489, "type": "Bait", "zone": "Inshore (≤10 NM)", "nm": 9.875594994391832, "notes": "Zone: Inshore (≤10 NM)<br/>Species: Whitebait / Pilchards, Threadfin Herring, Pinfish, Shrimp"}, {"name": "B 200' Steel Deck Barge – St. Pete Beach", "lat": 27.676667, "lon": -82.86235, "type": "Spot", "zone": "Nearshore (10–25 NM)", "nm": 11.82291252470297, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "R St. Pete Beach Reef", "lat": 27.676667, "lon": -82.863333, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 11.856813003920182, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Bait – Egmont Channel Entrance (marker/ström)", "lat": 27.59, "lon": -82.931, "type": "Bait", "zone": "Nearshore (10–25 NM)", "nm": 11.930680898011545, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Whitebait / Pilchards, Threadfin Herring, Pinfish, Shrimp"}, {"name": "M U.S. Army Tanks (cluster) – St. Pete Beach", "lat": 27.6785, "lon": -82.863667, "type": "Spot", "zone": "Nearshore (10–25 NM)", "nm": 11.952139901424687, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "Bay Reef – Harts Family", "lat": 27.358283, "lon": -82.588967, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 12.236293705718126, "notes": "Zone: Nearshore (10–25 NM)<br/>Depth: 9 ft (2.7 m)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "Bay Reef – Sportfishing Anglers Club", "lat": 27.32985, "lon": -82.654433, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 12.2923328310634, "notes": "Zone: Nearshore (10–25 NM)<br/>Depth: 15 ft (4.6 m)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "Gary Serviss Reef", "lat": 27.319533, "lon": -82.7194, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 12.426464437781544, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "M-1 Artificial Reef", "lat": 27.319317, "lon": -82.720133, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 12.439626487285581, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Bay Reef – O.D. Miller", "lat": 27.345233, "lon": -82.599017, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 12.611930254228524, "notes": "Zone: Nearshore (10–25 NM)<br/>Depth: 8 ft (2.4 m)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "Bay Reef – Pop Jantzen", "lat": 27.336817, "lon": -82.616867, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 12.613418295074842, "notes": "Zone: Nearshore (10–25 NM)<br/>Depth: 11 ft (3.4 m)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "Tom Wallin Reef", "lat": 27.312417, "lon": -82.716683, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 12.85405189373484, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Bay Reef – Jim Evans", "lat": 27.32805, "lon": -82.627983, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 12.856673281122331, "notes": "Zone: Nearshore (10–25 NM)<br/>Depth: 11 ft (3.4 m)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "M-2 Artificial Reef", "lat": 27.312233, "lon": -82.716267, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 12.865295167461877, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Bay Reef – Bully Powers", "lat": 27.321083, "lon": -82.643767, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 12.962277890236242, "notes": "Zone: Nearshore (10–25 NM)<br/>Depth: 10 ft (3.0 m)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "Bay Reef – Rose Coker", "lat": 27.312617, "lon": -82.660717, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 13.207109206172685, "notes": "Zone: Nearshore (10–25 NM)<br/>Depth: 10 ft (3.0 m)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "Bay Reef – Jonnie Walker", "lat": 27.30265, "lon": -82.68725, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 13.543593638492077, "notes": "Zone: Nearshore (10–25 NM)<br/>Depth: 9 ft (2.7 m)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "New Pass (Sarasota) (Inshore Edge)", "lat": 27.333317, "lon": -82.583054, "type": "Pass / Current", "zone": "Nearshore (10–25 NM)", "nm": 13.664425606792475, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "Bait – New Pass (Sarasota) (ström & bait)", "lat": 27.333317, "lon": -82.583054, "type": "Bait", "zone": "Nearshore (10–25 NM)", "nm": 13.664425606792475, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Whitebait / Pilchards, Threadfin Herring, Pinfish, Shrimp"}, {"name": "Cockroach Bay Aquatic Preserve – seagrass flats", "lat": 27.686142, "lon": -82.534263, "type": "Spot", "zone": "Nearshore (10–25 NM)", "nm": 13.713976862954993, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Grass – Sarasota Bay grass flats (north)", "lat": 27.338, "lon": -82.56, "type": "Grass flats", "zone": "Nearshore (10–25 NM)", "nm": 14.12548541994383, "notes": "Zone: Nearshore (10–25 NM)<br/>Depth: 4 ft (1.2 m)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "Bait – Sarasota Bay docks/bridges (whitebait)", "lat": 27.341, "lon": -82.537, "type": "Bait", "zone": "Nearshore (10–25 NM)", "nm": 14.754776518487219, "notes": "Zone: Nearshore (10–25 NM)<br/>Depth: 10 ft (3.0 m)<br/>Species: Whitebait / Pilchards, Threadfin Herring, Pinfish, Shrimp"}, {"name": "M-3 Artificial Reef", "lat": 27.279033, "lon": -82.720183, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 14.858268086503388, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "R Treasure Island Reef", "lat": 27.741667, "lon": -82.881667, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 15.560128462158055, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Johns Pass (Inshore Edge)", "lat": 27.783638, "lon": -82.781769, "type": "Pass / Current", "zone": "Nearshore (10–25 NM)", "nm": 15.799829300322779, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "M-7 Artificial Reef", "lat": 27.270933, "lon": -82.799917, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 15.944696110833231, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Big Sarasota Pass (Inshore Edge)", "lat": 27.294178, "lon": -82.566078, "type": "Pass / Current", "zone": "Nearshore (10–25 NM)", "nm": 16.145069737329266, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "Bait – Big Sarasota Pass (ström & bait)", "lat": 27.294178, "lon": -82.566078, "type": "Bait", "zone": "Nearshore (10–25 NM)", "nm": 16.145069737329266, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Whitebait / Pilchards, Threadfin Herring, Pinfish, Shrimp"}, {"name": "Big Pass (Siesta Key) (Inshore Edge)", "lat": 27.290942, "lon": -82.565259, "type": "Pass / Current", "zone": "Nearshore (10–25 NM)", "nm": 16.335081578533426, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "M-4 Artificial Reef", "lat": 27.252733, "lon": -82.7194, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 16.437149649016156, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "R St. Petersburg Bay Reef", "lat": 27.785, "lon": -82.598333, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 16.786891430270536, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "B Barge – St. Pete Bay Reef", "lat": 27.788733, "lon": -82.591417, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 17.13610653994497, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "B 75' Steel Deck Barge – Pinellas South", "lat": 27.72225, "lon": -82.97475, "type": "Spot", "zone": "Nearshore (10–25 NM)", "nm": 17.99412367310152, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "T Steel-hulled Tug – Pinellas South", "lat": 27.722917, "lon": -82.974167, "type": "Spot", "zone": "Nearshore (10–25 NM)", "nm": 17.996836112092048, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "South County Reef – 80' Tug 'Orange'", "lat": 27.722917, "lon": -82.974167, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 17.996836112092048, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "R Madeira Reef", "lat": 27.771667, "lon": -82.915, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 18.04910040036938, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "B 110' Steel Deck Barge – Pinellas South", "lat": 27.722717, "lon": -82.9764, "type": "Spot", "zone": "Nearshore (10–25 NM)", "nm": 18.07891564898426, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "B 116' Steel Deck Barge – Pinellas South", "lat": 27.723133, "lon": -82.977033, "type": "Spot", "zone": "Nearshore (10–25 NM)", "nm": 18.120713939223755, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "M-5 Artificial Reef", "lat": 27.2236, "lon": -82.719067, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 18.18627072232019, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "M-8 Artificial Reef", "lat": 27.211417, "lon": -82.80335, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 19.4498084807608, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Fallen Heroes Reef (CWO Kyle Jackson Trail)", "lat": 27.2088, "lon": -82.802017, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 19.586421671813955, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Weedon Island Preserve – flats & mangroves", "lat": 27.845, "lon": -82.60194, "type": "Spot", "zone": "Nearshore (10–25 NM)", "nm": 20.10376736031284, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Grass – Blackburn Bay flats edge", "lat": 27.24, "lon": -82.52, "type": "Grass flats", "zone": "Nearshore (10–25 NM)", "nm": 20.19928937065342, "notes": "Zone: Nearshore (10–25 NM)<br/>Depth: 4 ft (1.2 m)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)<br/>Notes: (justerad västerut för att hamna i vattnet)"}, {"name": "R Picnic Island Reef", "lat": 27.833333, "lon": -82.56, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 20.26088625770411, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "M-6 Artificial Reef", "lat": 27.1866, "lon": -82.727217, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 20.412910733196288, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "R Picnic Island Pier Reef", "lat": 27.856667, "lon": -82.555, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 21.64771436557547, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "R Port Tampa Reef", "lat": 27.861667, "lon": -82.563333, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 21.750910713103508, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "R Howard Frankland Reef", "lat": 27.86, "lon": -82.555, "type": "Reef", "zone": "Nearshore (10–25 NM)", "nm": 21.831059749459, "notes": "Zone: Nearshore (10–25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Wreck – Blackthorn (Indian Shores area)", "lat": 27.882, "lon": -82.856, "type": "Wreck", "zone": "Nearshore (10–25 NM)", "nm": 22.559247020818564, "notes": "Zone: Nearshore<br/>Depth: 55 ft (16.8 m)<br/>Species: Goliath Grouper, Grouper, Snapper, Kingfish, Barracuda<br/>Method: anchor & fish the wreck, drift jigs around edges<br/>Bait: pinfish, shrimp, jigs<br/>Notes: Populär dyk-/fiskewreck. Använd ekolod för att hitta kanten."}, {"name": "Wreck – Sheridan (approx, offshore of Clearwater)", "lat": 27.85, "lon": -82.95, "type": "Pass / Current", "zone": "Nearshore (10–25 NM)", "nm": 22.991099745383554, "notes": "Zone: Offshore<br/>Depth: 95 ft (29.0 m)<br/>Species: Goliath Grouper, Amberjack, Kingfish, Grouper, Snapper<br/>Method: anchor up-current, heavy tackle, vertical jigs<br/>Bait: live runners, large jigs, dead bait<br/>Notes: Ungefärlig position (använd ekolod för exakt)."}, {"name": "Grass – Roberts Bay flats edge", "lat": 27.195, "lon": -82.482, "type": "Grass flats", "zone": "Nearshore (10–25 NM)", "nm": 23.565511165511438, "notes": "Zone: Nearshore (10–25 NM)<br/>Depth: 4 ft (1.2 m)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "R Ballast Point Pier Reef", "lat": 27.888333, "lon": -82.478333, "type": "Reef", "zone": "Offshore (≥25 NM)", "nm": 25.200922180655535, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "WWII Navy Landing Craft (Indian Shores)", "lat": 27.85735, "lon": -83.03055, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 25.876868409399144, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "C WWII Navy Landing Craft – Indian Shores", "lat": 27.85735, "lon": -83.03055, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 25.876868409399144, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "B 240' Hopper Barge (Upside Down) – Indian Shores", "lat": 27.86325, "lon": -83.0336, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 26.252625954321896, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "240' Hopper Barge (Indian Shores)", "lat": 27.86325, "lon": -83.0336, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 26.252625954321896, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "D3 – Boxcars (Deep)", "lat": 27.265517, "lon": -83.120117, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 26.525844867599744, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "D4 – Boxcars (Deep)", "lat": 27.257333, "lon": -83.118933, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 26.76932790109393, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "R Courtney Campbell Reef", "lat": 27.963333, "lon": -82.615, "type": "Reef", "zone": "Offshore (≥25 NM)", "nm": 26.799282026579927, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Clearwater Pass (Inshore Edge)", "lat": 27.962798, "lon": -82.828992, "type": "Pass / Current", "zone": "Offshore (≥25 NM)", "nm": 26.84414929134855, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "Bait – Clearwater Pass (ström & bait)", "lat": 27.962798, "lon": -82.828992, "type": "Bait", "zone": "Offshore (≥25 NM)", "nm": 26.84414929134855, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Whitebait / Pilchards, Threadfin Herring, Pinfish, Shrimp"}, {"name": "M-9 Artificial Reef", "lat": 27.0725, "lon": -82.700567, "type": "Reef", "zone": "Offshore (≥25 NM)", "nm": 27.275362411015145, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "I4 – Venice Bridge & Pier Rubble", "lat": 27.105067, "lon": -82.48175, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 28.282440300382696, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "M-16 Artificial Reef", "lat": 27.063833, "lon": -82.595667, "type": "Reef", "zone": "Offshore (≥25 NM)", "nm": 28.542735181175722, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Venice Inlet V-1 Limestone boulders", "lat": 27.103117, "lon": -82.464283, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 28.814115950474285, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "Venice Inlet V-2 Limestone boulders", "lat": 27.100667, "lon": -82.463933, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 28.952797855121474, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "Venice Inlet V-3 Limestone boulders", "lat": 27.097817, "lon": -82.46235, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 29.143613195635467, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "Venice Inlet V-4 Limestone boulders", "lat": 27.095933, "lon": -82.461633, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 29.261515217349395, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "B Barge – Rube Allyn area", "lat": 27.93575, "lon": -83.022533, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 29.404711752029993, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Bait – Venice Inlet (cast net)", "lat": 27.096, "lon": -82.454, "type": "Bait", "zone": "Offshore (≥25 NM)", "nm": 29.45095398510438, "notes": "Zone: Offshore (≥25 NM)<br/>Depth: 10 ft (3.0 m)<br/>Species: Whitebait / Pilchards, Threadfin Herring, Pinfish, Shrimp"}, {"name": "Venice Reef (Concrete Culvert)", "lat": 27.07645, "lon": -82.458483, "type": "Reef", "zone": "Offshore (≥25 NM)", "nm": 30.37687247312599, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "R Clearwater Reef", "lat": 28.016667, "lon": -82.895, "type": "Reef", "zone": "Offshore (≥25 NM)", "nm": 30.885642815235737, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "D6 – Fiberglass molds/boats (Deep)", "lat": 27.103167, "lon": -83.0532, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 31.058187854566068, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Venice Inlet V-5 Limestone boulders", "lat": 27.065267, "lon": -82.449967, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 31.182193661023614, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "Hurricane Pass (Inshore Edge)", "lat": 28.053072, "lon": -82.815103, "type": "Pass / Current", "zone": "Offshore (≥25 NM)", "nm": 32.028352122823044, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "C 48' Ferro Cement Sailboat – Treasure Island II", "lat": 27.696133, "lon": -83.291317, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 32.12653826207566, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "C 50' Fishing Trawler – Treasure Island II", "lat": 27.694767, "lon": -83.29245, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 32.158033589959096, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "C 85' Shrimp Boat – Treasure Island II", "lat": 27.69585, "lon": -83.292617, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 32.186807095450526, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "C 42' Ferro Cement Sailboat – Treasure Island II", "lat": 27.696017, "lon": -83.292633, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 32.1907614140077, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "T 180' Tug “Sheridan” (Pinellas #2)", "lat": 27.8763, "lon": -83.185833, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 32.52629322032982, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "180' Tug 'Sheridan' (Pinellas II)", "lat": 27.8763, "lon": -83.185833, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 32.52629322032982, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "T USCG Cutter “Blackthorn” (Pinellas #2)", "lat": 27.875, "lon": -83.19, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 32.64578334939029, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "USCG Cutter 'Blackthorn' (Pinellas II)", "lat": 27.875, "lon": -83.19, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 32.64578334939029, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "B Seafood Barge – Pinellas #2", "lat": 27.8768, "lon": -83.1885, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 32.653962843048866, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "R Dunedin Reef", "lat": 28.053333, "lon": -82.91, "type": "Reef", "zone": "Offshore (≥25 NM)", "nm": 33.224683788791594, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "M Veterans Reef – Bomber Airplane", "lat": 28.04725, "lon": -83.012033, "type": "Reef", "zone": "Offshore (≥25 NM)", "nm": 34.93534464360269, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}, {"name": "B Veterans Reef – 3 Barges", "lat": 28.049667, "lon": -83.01235, "type": "Reef", "zone": "Offshore (≥25 NM)", "nm": 35.0726901405537, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Hemmahamn – 512 Bayview Pl (Anna Maria)", "lat": 27.53, "lon": -82.0, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 38.261428493415664, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "D-9 – Steel Crane Barge (Deep)", "lat": 26.911983, "lon": -82.93155, "type": "Spot", "zone": "Offshore (≥25 NM)", "nm": 38.60779965031328, "notes": "Zone: Offshore (≥25 NM)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia, Kingfish, Grouper (Goliath + others), Snapper (excl. Vermilion/Mutton), Amberjack, Hogfish, Barracuda, Permit, Mahi Mahi, Tuna"}, {"name": "Grass – Lemon Bay flats edge", "lat": 26.936, "lon": -82.35, "type": "Grass flats", "zone": "Offshore (≥25 NM)", "nm": 40.54900310495947, "notes": "Zone: Offshore (≥25 NM)<br/>Depth: 4 ft (1.2 m)<br/>Species: Snook, Redfish, Ladyfish, Tarpon, Jack Crevalle, Drumfish, Barracuda, Bluefish, Spanish Mackerel, Permit, Cobia (spring)"}];
+
+const ZONES = ["Alla zoner","Inshore (≤10 NM)","Nearshore (10–25 NM)","Offshore (≥25 NM)"];
+let state = {zone:"Alla zoner", q:"", type:"Alla typer", sort:"near"};
+
+function nmToMinutes(nm, speedKn){ return Math.round((nm / (speedKn||18)) * 60); }
+function googleMapsLink(lat, lon){ return "https://www.google.com/maps?q=" + lat + "," + lon; }
+function norm(s){ return (s||"").toString().toLowerCase(); }
+
+function spotMatchesFish(spot, fish){
+  if (fish==="Alla arter") return true;
+  const hay = norm(spot.name + " " + (spot.notes||""));
+  return hay.indexOf(norm(fish)) !== -1;
+}
+
+function filterSpots(list){
+  const q = norm(state.q);
+  return list.filter(function(s){
+    if (state.zone !== "Alla zoner" && s.zone !== state.zone) return false;
+    if (state.type !== "Alla typer" && s.type !== state.type) return false;
+    if (!q) return true;
+    const m = q.match(/(\d+(?:\.\d+)?)\s*nm/);
+    if (m){
+      const max = parseFloat(m[1]);
+      if (s.nm > max) return false;
+    }
+    const hay = norm(s.name) + " " + norm(s.type) + " " + norm(s.zone) + " " + norm(s.notes||"");
+    return hay.indexOf(q) !== -1;
+  });
+}
+
+function sortSpots(list){
+  const a = list.slice();
+  if (state.sort==="near") a.sort(function(x,y){ return x.nm - y.nm; });
+  else if (state.sort==="far") a.sort(function(x,y){ return y.nm - x.nm; });
+  else a.sort(function(x,y){ return x.name.localeCompare(y.name, "sv"); });
+  return a;
+}
+
+function render(){
+  const grid = document.getElementById("grid");
+  const meta = document.getElementById("meta");
+  grid.innerHTML = "";
+  const list = sortSpots(filterSpots(SPOTS));
+  meta.textContent = "Visar " + list.length + " av " + SPOTS.length + " spots";
+  list.forEach(function(s){
+    const mins = nmToMinutes(s.nm, 18);
+    const el = document.createElement("div");
+    el.className = "card";
+    el.innerHTML =
+      "<h3>" + s.name + "</h3>" +
+      "<div class='row'>" +
+        "<span class='badge'>📍 " + s.lat.toFixed(6) + ", " + s.lon.toFixed(6) + "</span>" +
+        "<span class='badge'>🧭 " + s.nm.toFixed(1) + " NM</span>" +
+        "<span class='badge'>⏱️ ~" + mins + " min</span>" +
+      "</div>" +
+      "<div class='row' style='margin-top:8px'>" +
+        "<span class='badge'>🏷️ " + s.type + "</span>" +
+        "<span class='badge'>🌊 " + s.zone + "</span>" +
+      "</div>" +
+      "<div style='margin-top:8px'><a href='" + googleMapsLink(s.lat,s.lon) + "' target='_blank' rel='noopener'>Öppna i Google Maps</a></div>" +
+      "<details><summary>Visa detaljer</summary><div class='kicker' style='margin-top:8px'>" + (s.notes && s.notes.trim()? s.notes : "—") + "</div></details>";
+    grid.appendChild(el);
+  });
+}
+
+function buildZoneChips(){
+  const holder = document.getElementById("zoneChips");
+  holder.innerHTML = "";
+  ZONES.forEach(function(z){
+    const b = document.createElement("div");
+    b.className = "chip" + (z===state.zone ? " active" : "");
+    b.textContent = z;
+    b.onclick = function(){ state.zone = z; buildZoneChips(); render(); };
+    holder.appendChild(b);
+  });
+}
+
+function buildTypeSelect(){
+  const sel = document.getElementById("typeSel");
+  const set = {};
+  SPOTS.forEach(function(s){ set[s.type]=true; });
+  const types = Object.keys(set).sort(function(a,b){ return a.localeCompare(b,"sv"); });
+  sel.innerHTML = "<option>Alla typer</option>" + types.map(function(t){ return "<option>" + t + "</option>"; }).join("");
+  sel.value = state.type;
+  sel.onchange = function(){ state.type = sel.value; render(); };
+}
+
+function wireSearchAndSort(){
+  const q = document.getElementById("q");
+  q.addEventListener("input", function(){ state.q = q.value; render(); });
+  const sortSel = document.getElementById("sortSel");
+  sortSel.onchange = function(){ state.sort = sortSel.value; render(); };
+}
+
+function openTopPanel(){
+  document.getElementById("topPanelBackdrop").style.display="block";
+  document.getElementById("topPanel").style.display="block";
+  renderTopList();
+}
+function closeTopPanel(){
+  document.getElementById("topPanelBackdrop").style.display="none";
+  document.getElementById("topPanel").style.display="none";
+}
+
+function buildTopControls(){
+  const fishSel = document.getElementById("fishSel");
+  const fish = ["Alla arter","Goliath","Goliath Grouper","Snook","Redfish","Tarpon","Cobia","Kingfish","Grouper","Snapper","Permit","Amberjack","Spanish mackerel","Bluefish","Jack crevalle","Barracuda","Hogfish","Mahi","Tuna","Ladyfish"];
+  fishSel.innerHTML = fish.map(function(f){ return "<option value='" + f + "'>" + f + "</option>"; }).join("");
+  fishSel.onchange = renderTopList;
+
+  const topTypeSel = document.getElementById("topTypeSel");
+  const set = {};
+  SPOTS.forEach(function(s){ set[s.type]=true; });
+  const types = ["Alla typer"].concat(Object.keys(set).sort(function(a,b){ return a.localeCompare(b,"sv"); }));
+  topTypeSel.innerHTML = types.map(function(t){ return "<option value='" + t + "'>" + t + "</option>"; }).join("");
+  topTypeSel.onchange = renderTopList;
+
+  document.getElementById("topZoneSel").onchange = renderTopList;
+}
+
+function renderTopList(){
+  const fish = document.getElementById("fishSel").value;
+  const t = document.getElementById("topTypeSel").value;
+  const z = document.getElementById("topZoneSel").value;
+  let list = SPOTS.filter(function(s){
+    if (t !== "Alla typer" && s.type !== t) return false;
+    if (z !== "all" && s.zone !== z) return false;
+    return spotMatchesFish(s, fish);
+  }).slice(0,10);
+
+  const box = document.getElementById("topList");
+  box.innerHTML = "";
+  if (!list.length){
+    box.innerHTML = "<div class='kicker'>Inga träffar – testa annan art/typ.</div>";
+    return;
+  }
+  list.forEach(function(s){
+    const el = document.createElement("div");
+    el.className = "topItem";
+    el.innerHTML =
+      "<div class='t'>" + s.name + "</div>" +
+      "<div class='kicker'>🏷️ " + s.type + " · 🌊 " + s.zone + " · 🧭 " + s.nm.toFixed(1) + " NM</div>" +
+      "<div style='margin-top:6px'><a href='" + googleMapsLink(s.lat,s.lon) + "' target='_blank' rel='noopener'>Öppna i Google Maps</a></div>";
+    box.appendChild(el);
+  });
+}
+
+document.getElementById("topBtn").onclick = openTopPanel;
+document.getElementById("topClose").onclick = closeTopPanel;
+document.getElementById("topPanelBackdrop").onclick = closeTopPanel;
+
+buildZoneChips();
+buildTypeSelect();
+wireSearchAndSort();
+buildTopControls();
+render();
+</script>
+</body>
+</html>
